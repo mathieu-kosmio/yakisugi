@@ -1,0 +1,26 @@
+[project]
+name = "yakisugi-etl"
+version = "0.1.0"
+description = "ETL géospatial hors ligne pour Yakisugi"
+requires-python = ">=3.12"
+dependencies = [
+  "geopandas>=1.0,<2",
+  "pandas>=2.2,<3",
+  "psycopg[binary]>=3.2,<4",
+  "pyproj>=3.7,<4",
+  "shapely>=2.0,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8,<9",
+  "pytest-cov>=6,<7",
+  "ruff>=0.9,<1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/etl"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
