@@ -14,7 +14,7 @@ Dernière mise à jour : 28 août 2026
 
 ## État courant
 
-Le dépôt contient le produit MVP local complet : application cartographique, ETL PostGIS, export déterministe, demande commerciale, paiement externe administré, Stripe optionnel, téléchargement protégé, analytics agrégés, SEO et image Docker Coolify. L'extraction SIRENE réelle ciblée est préparée et validée à blanc. La publication attend les services hébergés, les autres données réelles et les informations légales.
+Le MVP complet est déployé dans Coolify sur HTTPS et fonctionne publiquement en mode fixtures : application cartographique, export déterministe, demande commerciale, analytics agrégés, SEO et contrôles de sécurité. L'extraction SIRENE réelle ciblée est préparée et validée à blanc. Le passage aux données réelles attend l'application des migrations Supabase, les imports sources et les informations légales.
 
 ## Jalons
 
@@ -26,7 +26,7 @@ Le dépôt contient le produit MVP local complet : application cartographique, E
 | M3 | DONE | ETL réel | Incident, forêt, cadastre et industries importables par CLI avec tests géospatiaux |
 | M4 | DONE | Produit professionnel | Filtres, fiche événement, pagination et limites publiques |
 | M5 | DONE | Monétisation | Contact par défaut, paiement externe administré, Stripe optionnel, ZIP et téléchargement protégé |
-| M6 | IN_PROGRESS | Lancement | Méthodologie, SEO, analytics, performance, sécurité et déploiement vérifiés |
+| M6 | DONE | Lancement | Méthodologie, SEO, analytics, performance, sécurité et déploiement vérifiés |
 
 ## Tâches
 
@@ -49,7 +49,7 @@ Le dépôt contient le produit MVP local complet : application cartographique, E
 | T-014 | DONE | T-011 | `scripts/exports/` | CSV et GeoJSON complets, ZIP et méthodologie |
 | T-015 | DONE | T-014 | `app/api/stripe/`, `lib/stripe/` | Paiement et téléchargement sécurisé sans compte |
 | T-015B | DONE | T-014 | `app/acheter/`, `lib/sales/`, `scripts/admin/`, `supabase/` | Formulaire de contact, paiement externe et livraison administrée |
-| T-016 | IN_PROGRESS | T-012, T-015 | transversal | Tests E2E, performance, analytics et déploiement |
+| T-016 | DONE | T-012, T-015 | transversal | Tests E2E, performance, analytics et déploiement |
 | T-017 | DONE | T-009 | `scripts/`, `tests/etl/`, `docs/data/`, `data/sirene/` | Extraction SIRENE officielle ciblée, normalisée, tracée et validée à blanc |
 
 ## Preuves de vérification
@@ -126,6 +126,10 @@ Le dépôt contient le produit MVP local complet : application cartographique, E
 | 2026-08-28 | T-016 | image Docker `yakisugi:local` | Conteneur sain et `/api/health` en 200 |
 | 2026-08-28 | T-016 | build Coolify du commit `38aea3b` | Échec contenu avant bascule : `/carte` interrogeait Supabase pendant le pré-rendu |
 | 2026-08-28 | T-016 | test de rendu et build avec Supabase indisponible | 60 tests réussis et `/carte` rendu dynamiquement sans dépendance au build |
+| 2026-08-28 | T-016 | Coolify, commit `872c2e8` | Build réussi, conteneur sain et configuration production appliquée |
+| 2026-08-28 | T-016 | recette HTTPS publique | Accueil, carte, événement, achat, méthodologie, santé, API, sitemap et robots répondent comme attendu |
+| 2026-08-28 | T-016 | recette navigateur publique | Filtres de 10 à 2 parcelles et aucune erreur console sur les trois parcours principaux |
+| 2026-08-28 | T-016 | contrôle HTTP et sécurité | Redirection HTTP vers HTTPS, sitemap canonique HTTPS et six en-têtes de sécurité présents |
 
 ## Journal de session
 
@@ -178,11 +182,13 @@ Le dépôt contient le produit MVP local complet : application cartographique, E
 - Premier déploiement contrôlé : carte et filtres fonctionnels, mais version distante incomplète, données fictives, routes produit absentes et certificat HTTPS invalide.
 - Validation locale complète reprise le 28 août : tests TypeScript et Python, couvertures supérieures à 80 %, pgTAP, build, smoke, audit et image Docker réussis.
 - Le premier rebuild du commit complet a détecté une requête Supabase au pré-rendu de `/carte`. La reproduction locale, le test de non-régression et le rendu dynamique corrigent cette dépendance avant une nouvelle publication.
+- Le commit `872c2e8` est actif dans Coolify. Le mode fixtures est explicite tant que Supabase n'est pas migré, l'URL canonique est en HTTPS et la recette publique est réussie.
+- T-016 et M6 terminés : parcours HTTP et navigateur, SEO, sécurité, filtres, santé et déploiement vérifiés.
 
 ## Reste à faire
 
-T-013 demeure bloquée en l'absence de coefficients forestiers validés. T-016 est validée localement et en cours de republication dans Coolify après détection d'une version distante incomplète. Les données SIRENE ciblées sont prêtes. L'ouverture réelle nécessite encore Supabase hébergé, les autres données sources réelles, un certificat HTTPS valide et les informations légales de l'éditeur. Les clés Stripe seront utiles uniquement lors de sa réactivation.
+T-013 demeure bloquée en l'absence de coefficients forestiers validés. T-016 est terminée et le MVP public fonctionne sur fixtures. Les données SIRENE ciblées sont prêtes. Le passage aux données réelles nécessite d'appliquer les migrations Supabase, d'importer l'incident, la forêt, le cadastre et SIRENE, puis d'ajouter les informations légales de l'éditeur. Les clés Stripe seront utiles uniquement lors de sa réactivation.
 
 ## Prochaine tâche saisissable
 
-Publier le commit complet, reconstruire l'application Coolify sans cache, corriger HTTPS puis refaire la recette publique avant de configurer Supabase et les données réelles.
+Appliquer les migrations sur Supabase hébergé, importer les données sources réelles avec leurs preuves, valider les contrôles de qualité puis basculer `YAKISUGI_DATA_SOURCE` de `fixture` à `supabase`.
