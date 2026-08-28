@@ -1,0 +1,20 @@
+{
+  "type": "FeatureCollection",
+  "name": "yakisugi-fixture-parcels",
+  "crs": {
+    "type": "name",
+    "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" }
+  },
+  "features": [
+    { "type": "Feature", "properties": { "id": "33448000AB0041", "commune": "33448", "commune_name": "Saumos", "section": "AB", "numero": "0041" }, "geometry": { "type": "Polygon", "coordinates": [[[-1.068,45.025],[-1.05,45.025],[-1.05,45.037],[-1.068,45.037],[-1.068,45.025]]] } },
+    { "type": "Feature", "properties": { "id": "33448000AB0042", "commune": "33448", "commune_name": "Saumos", "section": "AB", "numero": "0042" }, "geometry": { "type": "Polygon", "coordinates": [[[-1.044,45.026],[-1.026,45.026],[-1.026,45.038],[-1.044,45.038],[-1.044,45.026]]] } },
+    { "type": "Feature", "properties": { "id": "33448000AB0043", "commune": "33448", "commune_name": "Saumos", "section": "AB", "numero": "0043" }, "geometry": { "type": "Polygon", "coordinates": [[[-1.02,45.027],[-1.002,45.027],[-1.002,45.039],[-1.02,45.039],[-1.02,45.027]]] } },
+    { "type": "Feature", "properties": { "id": "33448000AB0044", "commune": "33448", "commune_name": "Saumos", "section": "AB", "numero": "0044" }, "geometry": { "type": "Polygon", "coordinates": [[[-0.996,45.029],[-0.978,45.029],[-0.978,45.041],[-0.996,45.041],[-0.996,45.029]]] } },
+    { "type": "Feature", "properties": { "id": "33448000AB0045", "commune": "33448", "commune_name": "Saumos", "section": "AB", "numero": "0045" }, "geometry": { "type": "Polygon", "coordinates": [[[-0.972,45.03],[-0.954,45.03],[-0.954,45.042],[-0.972,45.042],[-0.972,45.03]]] } },
+    { "type": "Feature", "properties": { "id": "33448000AC0046", "commune": "33448", "commune_name": "Saumos", "section": "AC", "numero": "0046" }, "geometry": { "type": "Polygon", "coordinates": [[[-1.057,45.003],[-1.039,45.003],[-1.039,45.015],[-1.057,45.015],[-1.057,45.003]]] } },
+    { "type": "Feature", "properties": { "id": "33011000AC0047", "commune": "33011", "commune_name": "Le Temple", "section": "AC", "numero": "0047" }, "geometry": { "type": "Polygon", "coordinates": [[[-1.033,45.004],[-1.015,45.004],[-1.015,45.016],[-1.033,45.016],[-1.033,45.004]]] } },
+    { "type": "Feature", "properties": { "id": "33011000AC0048", "commune": "33011", "commune_name": "Le Temple", "section": "AC", "numero": "0048" }, "geometry": { "type": "Polygon", "coordinates": [[[-1.009,45.005],[-0.991,45.005],[-0.991,45.017],[-1.009,45.017],[-1.009,45.005]]] } },
+    { "type": "Feature", "properties": { "id": "33011000AC0049", "commune": "33011", "commune_name": "Le Temple", "section": "AC", "numero": "0049" }, "geometry": { "type": "Polygon", "coordinates": [[[-0.985,45.006],[-0.967,45.006],[-0.967,45.018],[-0.985,45.018],[-0.985,45.006]]] } },
+    { "type": "Feature", "properties": { "id": "33011000AC0050", "commune": "33011", "commune_name": "Le Temple", "section": "AC", "numero": "0050" }, "geometry": { "type": "Polygon", "coordinates": [[[-0.961,45.007],[-0.943,45.007],[-0.943,45.019],[-0.961,45.019],[-0.961,45.007]]] } }
+  ]
+}

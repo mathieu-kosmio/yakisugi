@@ -2,17 +2,19 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { listParcelsByIncident } from "@/lib/data/radar-repository";
 
-const querySchema = z.object({
-  species: z.string().trim().min(1).optional(),
-  minArea: z.coerce.number().min(0).optional(),
-  confidence: z
-    .string()
-    .transform((value) => value.split(","))
-    .pipe(z.array(z.enum(["low", "medium", "high"])))
-    .optional(),
-  page: z.coerce.number().int().positive().default(1),
-  pageSize: z.coerce.number().int().min(1).max(100).default(25),
-});
+const querySchema = z
+  .object({
+    species: z.string().trim().min(1).max(100).optional(),
+    minArea: z.coerce.number().min(0).max(1_000_000).optional(),
+    confidence: z
+      .string()
+      .transform((value) => value.split(","))
+      .pipe(z.array(z.enum(["low", "medium", "high"])))
+      .optional(),
+    page: z.coerce.number().int().positive().max(10_000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(25),
+  })
+  .strict();
 
 type RouteContext = { params: Promise<{ slug: string }> };
 
@@ -33,20 +35,15 @@ export async function GET(request: Request, context: RouteContext) {
     species,
     minAffectedAreaHa: minArea,
     confidence,
+    page,
+    pageSize,
   });
 
   if (!parcels) {
     return NextResponse.json({ error: "Incident not found" }, { status: 404 });
   }
 
-  const start = (page - 1) * pageSize;
-  return NextResponse.json({
-    data: parcels.slice(start, start + pageSize),
-    pagination: {
-      page,
-      pageSize,
-      total: parcels.length,
-      pageCount: Math.ceil(parcels.length / pageSize),
-    },
+  return NextResponse.json(parcels, {
+    headers: { "Cache-Control": "public, max-age=60, s-maxage=300" },
   });
 }

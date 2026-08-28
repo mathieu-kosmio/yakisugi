@@ -4,9 +4,16 @@ import maplibregl, {
   type GeoJSONSource,
   type Map as MapLibreMap,
 } from "maplibre-gl";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { trackEvent } from "@/lib/analytics/client";
 import { filterParcels, summarizeIncident } from "@/lib/domain/radar";
-import type { ParcelFeature, RadarFixture } from "@/lib/domain/types";
+import type {
+  Confidence,
+  IndustryCategory,
+  ParcelFeature,
+  RadarFixture,
+} from "@/lib/domain/types";
 
 type RadarMapProps = {
   fixture: RadarFixture;
@@ -25,20 +32,67 @@ function formatHectares(value: number) {
 export function RadarMap({ fixture }: RadarMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const analyticsTrackedRef = useRef(false);
   const [selectedParcel, setSelectedParcel] = useState<ParcelFeature | null>(
     null,
   );
   const [species, setSpecies] = useState("");
   const [minArea, setMinArea] = useState(0);
+  const [confidence, setConfidence] = useState<Confidence | "">("");
+  const [industryCategory, setIndustryCategory] = useState<
+    IndustryCategory | ""
+  >("");
+  const [maxDistance, setMaxDistance] = useState(200);
   const summary = useMemo(() => summarizeIncident(fixture), [fixture]);
+  const availableSpecies = useMemo(
+    () =>
+      [
+        ...new Set(
+          fixture.parcels.features
+            .map((parcel) => parcel.properties.dominantSpecies)
+            .filter((value): value is string => Boolean(value)),
+        ),
+      ].sort((left, right) => left.localeCompare(right, "fr")),
+    [fixture.parcels.features],
+  );
+  const availableIndustryCategories = useMemo(
+    () =>
+      [
+        ...new Set(
+          fixture.industries.features.map(
+            (industry) => industry.properties.category,
+          ),
+        ),
+      ].sort(),
+    [fixture.industries.features],
+  );
   const filteredParcels = useMemo(
     () =>
       filterParcels(fixture.parcels.features, {
         species: species || undefined,
         minAffectedAreaHa: minArea,
+        confidence: confidence ? [confidence] : undefined,
       }),
-    [fixture.parcels.features, species, minArea],
+    [fixture.parcels.features, species, minArea, confidence],
   );
+  const filteredIndustries = useMemo(
+    () =>
+      fixture.industries.features.filter(
+        (industry) =>
+          industry.properties.distanceKm <= maxDistance &&
+          (!industryCategory ||
+            industry.properties.category === industryCategory),
+      ),
+    [fixture.industries.features, industryCategory, maxDistance],
+  );
+
+  useEffect(() => {
+    if (analyticsTrackedRef.current) return;
+    analyticsTrackedRef.current = true;
+    const slug = fixture.incident.properties.slug;
+    trackEvent("map_opened", slug);
+    trackEvent("incident_selected", slug);
+  }, [fixture.incident.properties.slug]);
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -139,6 +193,9 @@ export function RadarMap({ fixture }: RadarMapProps) {
         const parcel = fixture.parcels.features.find(
           (candidate) => candidate.properties.id === id,
         );
+        if (parcel) {
+          trackEvent("parcel_clicked", fixture.incident.properties.slug);
+        }
         setSelectedParcel(parcel ?? null);
       });
       map.on("mouseenter", "parcel-fill", () => {
@@ -173,10 +230,25 @@ export function RadarMap({ fixture }: RadarMapProps) {
     }
   }, [filteredParcels, selectedParcel]);
 
+  useEffect(() => {
+    const source = mapRef.current?.getSource("industries") as
+      | GeoJSONSource
+      | undefined;
+    source?.setData({
+      type: "FeatureCollection",
+      features: filteredIndustries,
+    });
+  }, [filteredIndustries]);
+
+  const isFixture =
+    fixture.incident.properties.sourceUrl.startsWith("local://");
+
   return (
     <div className="radar-layout">
       <aside className="radar-sidebar">
-        <span className="fixture-badge">Données fictives</span>
+        <span className="fixture-badge">
+          {isFixture ? "Données fictives" : "Données publiées"}
+        </span>
         <h1>{summary.name}</h1>
         <p className="hero-copy">
           Explorez les surfaces forestières potentiellement affectées et les
@@ -197,8 +269,8 @@ export function RadarMap({ fixture }: RadarMapProps) {
             <span>essence principale</span>
           </div>
           <div className="summary-card">
-            <strong>{summary.industryCountWithin100Km}</strong>
-            <span>industries à moins de 100 km</span>
+            <strong>{filteredIndustries.length}</strong>
+            <span>industries affichées</span>
           </div>
         </div>
 
@@ -210,11 +282,81 @@ export function RadarMap({ fixture }: RadarMapProps) {
             onChange={(event) => setSpecies(event.target.value)}
           >
             <option value="">Toutes les essences</option>
-            <option value="Pin maritime">Pin maritime</option>
-            <option value="Forêt mixte">Forêt mixte</option>
-            <option value="Chêne">Chêne</option>
+            {availableSpecies.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
           </select>
         </div>
+
+        <div className="filter-group">
+          <label htmlFor="confidence-filter">Niveau de confiance</label>
+          <select
+            id="confidence-filter"
+            value={confidence}
+            onChange={(event) =>
+              setConfidence(event.target.value as Confidence | "")
+            }
+          >
+            <option value="">Tous les niveaux</option>
+            <option value="high">Haute</option>
+            <option value="medium">Moyenne</option>
+            <option value="low">Faible</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label htmlFor="industry-category-filter">Métier industriel</label>
+          <select
+            id="industry-category-filter"
+            value={industryCategory}
+            onChange={(event) => {
+              setIndustryCategory(event.target.value as IndustryCategory | "");
+              trackEvent(
+                "industry_filter_used",
+                fixture.incident.properties.slug,
+              );
+            }}
+          >
+            <option value="">Tous les métiers</option>
+            {availableIndustryCategories.map((value) => (
+              <option key={value} value={value}>
+                {value}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label htmlFor="distance-filter">
+            Distance industrielle maximale
+          </label>
+          <select
+            id="distance-filter"
+            value={maxDistance}
+            onChange={(event) => {
+              setMaxDistance(Number(event.target.value));
+              trackEvent(
+                "industry_filter_used",
+                fixture.incident.properties.slug,
+              );
+            }}
+          >
+            <option value={25}>25 km</option>
+            <option value={50}>50 km</option>
+            <option value={100}>100 km</option>
+            <option value={150}>150 km</option>
+            <option value={200}>200 km</option>
+          </select>
+        </div>
+
+        <Link
+          className="map-event-link"
+          href={`/evenements/${fixture.incident.properties.slug}`}
+        >
+          Voir la fiche complète de l'événement
+        </Link>
 
         <div className="filter-group">
           <label htmlFor="area-filter">Surface touchée minimale</label>
@@ -278,7 +420,9 @@ export function RadarMap({ fixture }: RadarMapProps) {
           <article className="parcel-drawer" aria-live="polite">
             <div className="drawer-header">
               <div>
-                <span className="fixture-badge">Parcelle fictive</span>
+                <span className="fixture-badge">
+                  {isFixture ? "Parcelle fictive" : "Parcelle calculée"}
+                </span>
                 <h2>
                   {selectedParcel.properties.section}{" "}
                   {selectedParcel.properties.parcelNumber}

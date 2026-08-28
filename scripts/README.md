@@ -9,10 +9,155 @@ Les scripts Python préparent les données hors ligne avant publication. Ils n'e
 3. `process_forests.py`
 4. `import_parcels.py`
 5. `process_parcels.py`
-6. `import_industries.py`
-7. `calculate_distances.py`
-8. `generate_export.py`
+6. `prepare_sirene_stock.py`
+7. `import_industries.py`
+8. `calculate_distances.py`
+9. `generate_export.py`
 
-Chaque commande devra proposer un mode `--dry-run`, écrire un journal structuré, refuser les géométries invalides non réparables et produire un résumé des lignes lues, rejetées, insérées et mises à jour.
+Chaque commande propose un mode `--dry-run`, écrit un journal structuré, refuse les géométries invalides non réparables et produit un résumé des lignes lues, réparées, insérées ou mises à jour.
 
-Le premier script à implémenter est suivi par T-006 dans `IMPLEMENTATION_PLAN.md`.
+## Import d'un incident
+
+`import_incident.py` est implémenté. Il :
+
+1. lit le fichier avec GeoPandas ;
+2. refuse les entités vides ou non polygonales ;
+3. répare les polygones invalides lorsque Shapely le permet ;
+4. convertit les coordonnées en EPSG:4326 ;
+5. dissout les surfaces en un `MultiPolygon` ;
+6. calcule une superficie géodésique en hectares ;
+7. insère ou met à jour l'incident et sa provenance dans une transaction PostgreSQL.
+
+Exemple de validation locale :
+
+```bash
+.venv/bin/python scripts/import_incident.py \
+  --file fixtures/incident.geojson \
+  --name "Incident de démonstration de Saumos" \
+  --external-id FIXTURE-SAUMOS-2026 \
+  --start-date 2026-07-22 \
+  --source-url local://fixtures/incident.geojson \
+  --department-codes 33 \
+  --dry-run
+```
+
+La date de départ et l'URL source sont obligatoires afin de respecter le schéma de provenance sans inventer de valeur. Hors simulation, fournir `DATABASE_URL` ou `--database-url`.
+
+## Import et traitement des forêts
+
+La première commande normalise les champs sources et remplace transactionnellement les peuplements bruts d'un département :
+
+```bash
+.venv/bin/python scripts/import_forest.py \
+  --file fixtures/forest.geojson \
+  --department 33 \
+  --source-url local://fixtures/forest.geojson \
+  --dry-run
+```
+
+Les colonnes par défaut sont `ID`, `CODE_TFV` et `TFV`. Une essence dominante reste `null` tant qu'une colonne vérifiée n'est pas fournie avec `--species-column`.
+
+Après import en base, l'intersection avec un incident est calculée hors ligne :
+
+```bash
+.venv/bin/python scripts/process_forests.py --incident EMSR899
+```
+
+Le traitement remplace les résultats de l'incident dans une transaction et calcule seulement `area_ha` et `affected_ratio`. Il ne produit aucune estimation de volume.
+
+## Import et traitement des parcelles
+
+La commande suivante normalise une couche parcellaire déjà extraite dans un format lisible par GeoPandas :
+
+```bash
+.venv/bin/python scripts/import_parcels.py \
+  --file fixtures/parcels.geojson \
+  --source-url local://fixtures/parcels.geojson \
+  --commune-name-column commune_name \
+  --dry-run
+```
+
+Les colonnes `id`, `commune`, `section` et `numero` sont utilisées par défaut et restent configurables. Le libellé de commune doit être fourni par une colonne vérifiée ou avec `--commune-name`.
+
+Après les imports incident, forêt et parcelles :
+
+```bash
+.venv/bin/python scripts/process_parcels.py --incident EMSR899
+```
+
+Cette commande calcule les surfaces touchées, la couverture forestière, l'essence dominante disponible et les compositions. Les résultats sont remplacés dans une transaction. Les champs de volume restent `null`.
+
+## Import des établissements industriels
+
+La sélection des codes APE se trouve dans `config/industry-categories.json`. Le fichier d'entrée CSV ou JSON doit exposer les champs SIRENE normalisés utilisés par la fixture.
+
+Pour une extraction ciblée, utiliser le générateur officiel de listes SIRENE de l'Annuaire des Entreprises avec les départements et codes APE souhaités, puis normaliser le CSV téléchargé :
+
+```bash
+.venv/bin/python scripts/prepare_sirene_annuaire.py \
+  --file data/sirene/raw/annuaire-des-entreprises-etablissements-2026-08-24.csv \
+  --categories config/industry-categories.json \
+  --department 33 \
+  --department 40 \
+  --output data/sirene/yakisugi-industries.csv \
+  --manifest data/sirene/manifest.json \
+  --retrieved-at 2026-08-24 \
+  --geocoding-cache data/sirene/geocoding-cache.json \
+  --geocode-missing
+```
+
+Le préparateur convertit les coordonnées Lambert-93 de l'Insee en WGS84. Lorsqu'une unité ne possède aucune raison sociale ou enseigne publiable, il utilise le libellé neutre `Établissement SIRENE <SIRET>` sans reconstituer le nom d'une personne. Le manifeste distingue les coordonnées sources, celles issues du cache, celles obtenues par géocodage et les absences restantes.
+
+Pour un traitement national, les deux fichiers stock officiels SIRENE peuvent aussi être réduits aux départements et codes APE utiles :
+
+```bash
+.venv/bin/python scripts/prepare_sirene_stock.py \
+  --establishments data/sirene/StockEtablissement_utf8.csv \
+  --legal-units data/sirene/StockUniteLegale_utf8.csv \
+  --categories config/industry-categories.json \
+  --department 33 \
+  --department 40 \
+  --output data/sirene/yakisugi-industries.csv
+```
+
+```bash
+.venv/bin/python scripts/import_industries.py \
+  --file data/sirene/yakisugi-industries.csv \
+  --categories config/industry-categories.json \
+  --geocoding-cache data/geocoding-cache.json \
+  --source-url URL_EXACTE_DU_MILLESIME_SIRENE \
+  --dry-run
+```
+
+Les coordonnées sources sont validées et alimentent le cache local. Pour résoudre les seules adresses absentes du cache avec l'API Géoplateforme, ajouter `--geocode-missing`. Cette option intervient uniquement pendant l'ETL. L'application web ne géocode aucun établissement.
+
+## Calcul des distances
+
+Après l'import des établissements, les proximités sont pré-calculées hors ligne :
+
+```bash
+.venv/bin/python scripts/calculate_distances.py --incident EMSR899
+```
+
+La commande conserve les sites situés dans un rayon de 200 km, calcule une distance géodésique à vol d'oiseau et affecte les bandes `0_25`, `25_50`, `50_100` ou `100_200`.
+
+## Génération d'un export professionnel
+
+Après tous les traitements, l'archive complète est générée depuis les géométries PostGIS non simplifiées :
+
+```bash
+.venv/bin/python scripts/exports/generate_export.py \
+  --incident EMSR899 \
+  --output-directory exports \
+  --upload
+```
+
+Le ZIP contient `README.pdf`, `parcelles.csv`, `parcelles.geojson`, `industriels.csv`, `statistiques.csv` et `methodology.txt`. Son checksum SHA-256 est enregistré dans la table `exports`. La même donnée d'entrée produit la même archive. Les volumes sont laissés vides en l'absence de coefficients documentés et validés. L'option `--upload` envoie l'archive dans le bucket Storage privé configuré par `YAKISUGI_EXPORT_BUCKET` avec la clé de service côté ETL.
+
+Le mode `--dry-run` valide la présence de l'incident et compte les lignes sans créer de fichier :
+
+```bash
+.venv/bin/python scripts/exports/generate_export.py \
+  --incident EMSR899 \
+  --dry-run
+```

@@ -1,0 +1,14 @@
+.git
+.next
+.venv
+coverage
+data
+exports
+node_modules
+.env
+.env.*
+!.env.example
+*.log
+__pycache__
+.pytest_cache
+.ruff_cache

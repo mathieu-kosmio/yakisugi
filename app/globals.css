@@ -421,6 +421,14 @@ a {
   color: var(--ink);
 }
 
+.map-event-link {
+  display: inline-flex;
+  margin-top: 1.25rem;
+  color: var(--forest);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
 .legend {
   display: grid;
   gap: 0.5rem;
@@ -552,6 +560,324 @@ a {
   font-size: 0.85rem;
 }
 
+.event-page {
+  padding-block: 4rem 6rem;
+}
+
+.event-hero {
+  display: grid;
+  align-items: start;
+  gap: 3rem;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.38fr);
+}
+
+.event-hero h1 {
+  max-width: 850px;
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(3rem, 7vw, 6rem);
+  font-weight: 500;
+  letter-spacing: -0.07em;
+  line-height: 0.95;
+}
+
+.event-intro {
+  max-width: 720px;
+  color: var(--muted);
+  font-size: 1.08rem;
+  line-height: 1.7;
+}
+
+.event-source-card {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 1.25rem;
+  background: var(--paper-strong);
+}
+
+.event-source-card div + div {
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+
+.event-source-card dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.event-source-card dd {
+  margin: 0.3rem 0 0;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.event-metrics {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 3rem;
+}
+
+.metric-card {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 18px;
+  padding: 1.2rem;
+  background: var(--forest);
+  color: white;
+}
+
+.metric-card span {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.8rem;
+}
+
+.metric-card strong {
+  font-family: Georgia, serif;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+}
+
+.event-columns {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.event-panel {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 1.4rem;
+  background: var(--paper-strong);
+}
+
+.panel-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panel-heading .eyebrow {
+  margin-bottom: 0.5rem;
+}
+
+.panel-heading h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: 1.65rem;
+  font-weight: 500;
+}
+
+.panel-heading > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.result-list {
+  display: grid;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--line);
+  padding-block: 0.9rem;
+}
+
+.result-row div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.result-row span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.result-row > strong {
+  white-space: nowrap;
+}
+
+.event-notice {
+  margin-top: 1rem;
+  border-radius: 18px;
+  padding: 1.25rem;
+  background: var(--ember-light);
+  color: #713016;
+}
+
+.event-notice p {
+  margin: 0.35rem 0 0;
+  line-height: 1.55;
+}
+
+.event-export-cta,
+.purchase-card {
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: var(--paper);
+  box-shadow: 0 18px 50px rgb(23 63 42 / 8%);
+}
+
+.event-export-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  padding: 1.75rem;
+}
+
+.event-export-cta h2,
+.event-export-cta p {
+  margin: 0.25rem 0 0;
+}
+
+.purchase-page {
+  max-width: 760px;
+  padding-block: 5rem;
+}
+
+.purchase-page h1 {
+  max-width: 680px;
+  margin: 0.4rem 0 1rem;
+  font-size: clamp(2.4rem, 7vw, 4.4rem);
+  line-height: 0.98;
+}
+
+.purchase-intro {
+  max-width: 660px;
+  color: var(--muted);
+  font-size: 1.12rem;
+  line-height: 1.7;
+}
+
+.purchase-card {
+  display: grid;
+  gap: 1.5rem;
+  margin: 2rem 0;
+  padding: 2rem;
+}
+
+.purchase-card > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.purchase-card strong {
+  color: var(--forest);
+  font-size: 2.5rem;
+}
+
+.purchase-card small,
+.purchase-legal {
+  color: var(--muted);
+}
+
+.purchase-card ul {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.purchase-card button {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.purchase-message {
+  border-left: 4px solid var(--ember);
+  padding: 0.8rem 1rem;
+  background: #fff4ed;
+}
+
+.purchase-success {
+  border-left: 4px solid var(--forest);
+  padding: 0.8rem 1rem;
+  background: var(--forest-light);
+  color: var(--forest);
+}
+
+.contact-form {
+  display: grid;
+  gap: 1rem;
+  border-top: 1px solid var(--line);
+  padding-top: 1.5rem;
+}
+
+.contact-form-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.contact-form label:not(.contact-consent):not(.contact-honeypot) {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--forest);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.contact-form input,
+.contact-form select,
+.contact-form textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  padding: 0.78rem 0.85rem;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}
+
+.contact-form textarea {
+  resize: vertical;
+}
+
+.contact-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.contact-consent input {
+  width: auto;
+  margin-top: 0.2rem;
+}
+
+.contact-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.purchase-backlink {
+  margin-top: 2rem;
+}
+
 @media (max-width: 840px) {
   .hero {
     grid-template-columns: 1fr;
@@ -570,6 +896,15 @@ a {
 
   .radar-layout {
     grid-template-columns: 1fr;
+  }
+
+  .event-hero,
+  .event-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .event-metrics {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .radar-sidebar {
@@ -605,5 +940,18 @@ a {
   .radar-layout {
     border-inline: 0;
     border-radius: 0;
+  }
+
+  .event-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .event-export-cta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .contact-form-grid {
+    grid-template-columns: 1fr;
   }
 }

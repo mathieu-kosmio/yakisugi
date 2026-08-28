@@ -11,5 +11,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Parcel not found" }, { status: 404 });
   }
 
-  return NextResponse.json(parcel);
+  return NextResponse.json(parcel, {
+    headers: { "Cache-Control": "public, max-age=60, s-maxage=300" },
+  });
 }

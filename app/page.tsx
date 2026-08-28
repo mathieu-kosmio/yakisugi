@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { listIncidents } from "@/lib/data/radar-repository";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const [incident] = await listIncidents();
 
@@ -16,8 +18,17 @@ export default async function HomePage() {
             situées à proximité.
           </p>
           <div className="hero-actions">
-            <Link className="button-primary" href="/carte">
+            <Link
+              className="button-primary"
+              href={`/carte?incident=${incident.slug}`}
+            >
               Explorer la carte
+            </Link>
+            <Link
+              className="button-secondary"
+              href={`/evenements/${incident.slug}`}
+            >
+              Voir la fiche événement
             </Link>
             <Link className="button-secondary" href="/methodologie">
               Comprendre les données
@@ -37,34 +48,30 @@ export default async function HomePage() {
 
       <section
         className="site-shell stats-strip"
-        aria-label="Indicateurs de démonstration"
+        aria-label="Indicateurs de l'événement"
       >
         <div className="stat">
           <strong className="stat-value">
             {incident.forestAreaHa.toLocaleString("fr-FR")} ha
           </strong>
-          <span className="stat-label">
-            forêt potentiellement affectée dans la fixture
-          </span>
+          <span className="stat-label">forêt potentiellement affectée</span>
         </div>
         <div className="stat">
           <strong className="stat-value">
             {incident.mainSpecies ?? "Inconnu"}
           </strong>
-          <span className="stat-label">
-            essence principale issue des données fictives
-          </span>
+          <span className="stat-label">essence principale disponible</span>
         </div>
         <div className="stat">
           <strong className="stat-value">{incident.parcelCount}</strong>
-          <span className="stat-label">parcelles fictives concernées</span>
+          <span className="stat-label">parcelles concernées</span>
         </div>
         <div className="stat">
           <strong className="stat-value">
             {incident.industryCountWithin100Km}
           </strong>
           <span className="stat-label">
-            sites industriels fictifs à moins de 100 km
+            sites industriels à moins de 100 km
           </span>
         </div>
       </section>

@@ -1,7 +1,18 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
   "files": {
-    "includes": ["**/*", "!SPEC.md", "!node_modules", "!.next", "!coverage"]
+    "includes": [
+      "**/*",
+      "!SPEC.md",
+      "!node_modules",
+      "!.next",
+      "!coverage",
+      "!.venv",
+      "!.pytest_cache",
+      "!.ruff_cache",
+      "!**/*.egg-info",
+      "!data"
+    ]
   },
   "formatter": {
     "enabled": true,

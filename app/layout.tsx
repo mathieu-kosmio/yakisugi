@@ -4,12 +4,18 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
   title: {
     default: "Yakisugi | Radar du bois sinistré",
     template: "%s | Yakisugi",
   },
   description:
     "Cartographier les ressources forestières potentiellement affectées et les capacités industrielles proches.",
+  openGraph: {
+    locale: "fr_FR",
+    siteName: "Yakisugi",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

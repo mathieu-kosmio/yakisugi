@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "yakisugi-etl"
 version = "0.1.0"
@@ -8,6 +12,7 @@ dependencies = [
   "pandas>=2.2,<3",
   "psycopg[binary]>=3.2,<4",
   "pyproj>=3.7,<4",
+  "reportlab>=4.4,<5",
   "shapely>=2.0,<3",
 ]
 
@@ -15,11 +20,16 @@ dependencies = [
 dev = [
   "pytest>=8,<9",
   "pytest-cov>=6,<7",
+  "pdfplumber>=0.11,<1",
+  "pypdf>=6,<7",
   "ruff>=0.9,<1",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/etl"]
+
+[tool.setuptools]
+packages = ["scripts", "scripts.admin", "scripts.exports"]
 
 [tool.ruff]
 line-length = 100

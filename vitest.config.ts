@@ -6,6 +6,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": new URL(".", import.meta.url).pathname,
+      "server-only": new URL("./tests/server-only.ts", import.meta.url)
+        .pathname,
     },
   },
   test: {
@@ -15,6 +17,12 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "json", "html"],
       include: ["lib/**/*.ts"],
+      thresholds: {
+        statements: 80,
+        branches: 70,
+        functions: 80,
+        lines: 80,
+      },
     },
   },
 });
