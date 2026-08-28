@@ -1,6 +1,6 @@
 # Plan d'implémentation de Yakisugi
 
-Dernière mise à jour : 27 août 2026
+Dernière mise à jour : 28 août 2026
 
 ## Décisions actives
 
@@ -124,6 +124,8 @@ Le dépôt contient le produit MVP local complet : application cartographique, E
 | 2026-08-28 | T-016 | `npm run smoke:web` | 8 parcours HTTP réussis, temps local maximal de 27 ms |
 | 2026-08-28 | T-016 | `npm audit --omit=dev` | 0 vulnérabilité de production connue |
 | 2026-08-28 | T-016 | image Docker `yakisugi:local` | Conteneur sain et `/api/health` en 200 |
+| 2026-08-28 | T-016 | build Coolify du commit `38aea3b` | Échec contenu avant bascule : `/carte` interrogeait Supabase pendant le pré-rendu |
+| 2026-08-28 | T-016 | test de rendu et build avec Supabase indisponible | 60 tests réussis et `/carte` rendu dynamiquement sans dépendance au build |
 
 ## Journal de session
 
@@ -175,6 +177,7 @@ Le dépôt contient le produit MVP local complet : application cartographique, E
 - T-016 reprise : recette du premier déploiement Coolify, consolidation Git, publication du MVP complet et nouvelle recette publique.
 - Premier déploiement contrôlé : carte et filtres fonctionnels, mais version distante incomplète, données fictives, routes produit absentes et certificat HTTPS invalide.
 - Validation locale complète reprise le 28 août : tests TypeScript et Python, couvertures supérieures à 80 %, pgTAP, build, smoke, audit et image Docker réussis.
+- Le premier rebuild du commit complet a détecté une requête Supabase au pré-rendu de `/carte`. La reproduction locale, le test de non-régression et le rendu dynamique corrigent cette dépendance avant une nouvelle publication.
 
 ## Reste à faire
 

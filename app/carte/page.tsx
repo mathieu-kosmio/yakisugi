@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { RadarMap } from "@/components/map/radar-map";
 import { getRadarDataBySlug, listIncidents } from "@/lib/data/radar-repository";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Carte du bois sinistré",
   description:
