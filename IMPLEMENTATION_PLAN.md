@@ -1,6 +1,6 @@
 # Plan d'implémentation de Yakisugi
 
-Dernière mise à jour : 28 août 2026
+Dernière mise à jour : 29 août 2026
 
 ## Décisions actives
 
@@ -14,7 +14,7 @@ Dernière mise à jour : 28 août 2026
 
 ## État courant
 
-Le MVP complet est déployé dans Coolify sur HTTPS et fonctionne publiquement en mode fixtures : application cartographique, export déterministe, demande commerciale, analytics agrégés, SEO et contrôles de sécurité. L'extraction SIRENE réelle ciblée est préparée et validée à blanc. Le passage aux données réelles attend l'application des migrations Supabase, les imports sources et les informations légales.
+Le MVP complet est déployé dans Coolify sur HTTPS et fonctionne publiquement en mode fixtures : application cartographique, export déterministe, demande commerciale, analytics agrégés, SEO et contrôles de sécurité. Le snapshot réel EMSR899 est chargé et publié dans Supabase : 31 602,37 ha d'incident, 3 615 formations forestières sources, 11 786 parcelles affectées et 2 019 établissements industriels. La bascule Coolify vers Supabase et la recette publique restent à exécuter.
 
 ## Jalons
 
@@ -51,6 +51,7 @@ Le MVP complet est déployé dans Coolify sur HTTPS et fonctionne publiquement e
 | T-015B | DONE | T-014 | `app/acheter/`, `lib/sales/`, `scripts/admin/`, `supabase/` | Formulaire de contact, paiement externe et livraison administrée |
 | T-016 | DONE | T-012, T-015 | transversal | Tests E2E, performance, analytics et déploiement |
 | T-017 | DONE | T-009 | `scripts/`, `tests/etl/`, `docs/data/`, `data/sirene/` | Extraction SIRENE officielle ciblée, normalisée, tracée et validée à blanc |
+| T-018 | IN_PROGRESS | T-003B, T-016, T-017 | `supabase/`, `scripts/`, `data/`, Coolify | Migrations et données réelles publiées, contrôlées puis servies par le site |
 
 ## Preuves de vérification
 
@@ -130,6 +131,19 @@ Le MVP complet est déployé dans Coolify sur HTTPS et fonctionne publiquement e
 | 2026-08-28 | T-016 | recette HTTPS publique | Accueil, carte, événement, achat, méthodologie, santé, API, sitemap et robots répondent comme attendu |
 | 2026-08-28 | T-016 | recette navigateur publique | Filtres de 10 à 2 parcelles et aucune erreur console sur les trois parcours principaux |
 | 2026-08-28 | T-016 | contrôle HTTP et sécurité | Redirection HTTP vers HTTPS, sitemap canonique HTTPS et six en-têtes de sécurité présents |
+| 2026-08-28 | T-018 | dry-run Copernicus EMSR899 | 1 832 polygones valides, 0 réparation et 31 602,37 ha calculés |
+| 2026-08-28 | T-018 | dry-run IGN BD Forêt V2 | 3 615 formations valides, attributs de type et d'essence conservés |
+| 2026-08-28 | T-018 | dry-run Cadastre Etalab | 11 790 parcelles candidates valides dans 15 communes |
+| 2026-08-28 | T-018 | dry-run SIRENE | 2 019 établissements importables, 85 non résolus exclus |
+| 2026-08-29 | T-018 | migrations Supabase hébergées | 7 migrations appliquées, schéma PostGIS et politiques de sécurité en place |
+| 2026-08-29 | T-018 | imports et traitements réels | Incident publié, 1 449 formations touchées, 11 786 parcelles affectées et 2 019 industries chargées |
+| 2026-08-29 | T-018 | calcul des proximités | 2 019 distances calculées, dont 1 516 industries à moins de 100 km |
+| 2026-08-29 | T-018 | contrôles qualité SQL | Géométries valides, ratios bornés, volumes à `null` et provenance des quatre sources vérifiée |
+| 2026-08-29 | T-018 | `npm run check` | Biome, TypeScript et 60 tests réussis |
+| 2026-08-29 | T-018 | `.venv/bin/ruff check scripts tests/etl` | Contrôles Python réussis |
+| 2026-08-29 | T-018 | `.venv/bin/pytest -q tests/etl` | 52 tests réussis, 7 tests d'intégration ignorés sans base locale |
+| 2026-08-29 | T-018 | `npm run build` | Build Next.js de production réussi avec 19 routes |
+| 2026-08-29 | T-018 | export réel en simulation | 11 786 parcelles et 2 019 industries validées sans écriture |
 
 ## Journal de session
 
@@ -185,10 +199,24 @@ Le MVP complet est déployé dans Coolify sur HTTPS et fonctionne publiquement e
 - Le commit `872c2e8` est actif dans Coolify. Le mode fixtures est explicite tant que Supabase n'est pas migré, l'URL canonique est en HTTPS et la recette publique est réussie.
 - T-016 et M6 terminés : parcours HTTP et navigateur, SEO, sécurité, filtres, santé et déploiement vérifiés.
 
+### 2026-08-28, bascule vers les données réelles
+
+- T-018 saisie : auditer les sources disponibles, migrer Supabase hébergé, importer les données réelles avec leurs preuves, contrôler la qualité puis basculer Coolify sur Supabase.
+- Sources réelles préparées : périmètre final Copernicus EMSR899, 3 615 formations IGN, 11 790 parcelles cadastrales candidates et 2 019 établissements SIRENE importables.
+- Publication Supabase en attente de `DATABASE_URL`, à fournir uniquement dans `.env.local` ou dans un gestionnaire de secrets.
+
+### 2026-08-29, publication du snapshot réel
+
+- Les sept migrations ont été appliquées au Supabase hébergé et le snapshot EMSR899 a été chargé avec sa provenance.
+- Les traitements hors ligne produisent 1 449 formations forestières touchées, 11 786 parcelles affectées et 2 019 distances industrielles.
+- Une précision géodésique à quatre décimales protège les micro-surfaces cadastrales et forestières contre les divisions par zéro.
+- Le centroïde de l'incident est matérialisé une fois par calcul de distances afin d'éviter le recalcul de la géométrie Copernicus complexe pour chaque établissement.
+- Les contrôles TypeScript, Python, build et export réel en simulation sont réussis. La bascule Coolify reste à effectuer.
+
 ## Reste à faire
 
-T-013 demeure bloquée en l'absence de coefficients forestiers validés. T-016 est terminée et le MVP public fonctionne sur fixtures. Les données SIRENE ciblées sont prêtes. Le passage aux données réelles nécessite d'appliquer les migrations Supabase, d'importer l'incident, la forêt, le cadastre et SIRENE, puis d'ajouter les informations légales de l'éditeur. Les clés Stripe seront utiles uniquement lors de sa réactivation.
+T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. T-016 est terminée et le MVP public fonctionne encore sur fixtures. Le snapshot réel EMSR899 est publié et contrôlé dans Supabase. La bascule Coolify et la recette publique restent à effectuer. Les informations légales de l'éditeur restent à ajouter. Les clés Stripe seront utiles uniquement lors de sa réactivation.
 
 ## Prochaine tâche saisissable
 
-Appliquer les migrations sur Supabase hébergé, importer les données sources réelles avec leurs preuves, valider les contrôles de qualité puis basculer `YAKISUGI_DATA_SOURCE` de `fixture` à `supabase`.
+Basculer `YAKISUGI_DATA_SOURCE` de `fixture` à `supabase` dans Coolify, redéployer le commit contrôlé et exécuter la recette publique complète.

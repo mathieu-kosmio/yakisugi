@@ -146,6 +146,110 @@ def test_calculate_affected_parcels_uses_low_confidence_without_forest() -> None
     assert result[0].compositions == ()
 
 
+def test_calculate_affected_parcels_preserves_sub_centiare_forest_area() -> None:
+    parcel_geometry = MultiPolygon(
+        [Polygon([(0, 0), (0.01, 0), (0.01, 0.01), (0, 0.01)])]
+    )
+    tiny_forest_geometry = MultiPolygon(
+        [
+            Polygon(
+                [
+                    (0.005, 0.005),
+                    (0.00501, 0.005),
+                    (0.00501, 0.00501),
+                    (0.005, 0.00501),
+                ]
+            )
+        ]
+    )
+    parcel = SourceParcel(
+        parcel_uid="parcel-tiny-forest",
+        insee_code="00001",
+        commune_name="Commune",
+        section="AB",
+        parcel_number="0002",
+        parcel_area_ha=_geodesic_area_ha(parcel_geometry),
+        source_id="parcel-source",
+        geometry=parcel_geometry,
+    )
+    forest = SourceForest(
+        forest_source_id="00:forest-tiny",
+        forest_type_code="FF1",
+        forest_type_label="Futaie de conifères",
+        dominant_species="Pin maritime",
+        source_id="forest-source",
+        geometry=tiny_forest_geometry,
+    )
+
+    result = calculate_affected_parcels(parcel_geometry, (parcel,), (forest,))
+
+    assert result[0].forest_area_ha == pytest.approx(0.0001)
+    assert result[0].compositions[0].area_ha == pytest.approx(0.0001)
+    assert result[0].compositions[0].percentage == 100
+
+
+def test_calculate_affected_parcels_skips_unrepresentable_parcel_area() -> None:
+    parcel_geometry = MultiPolygon(
+        [Polygon([(0, 0), (0.000001, 0), (0.000001, 0.000001), (0, 0.000001)])]
+    )
+    parcel = SourceParcel(
+        parcel_uid="parcel-zero-area",
+        insee_code="00001",
+        commune_name="Commune",
+        section="AB",
+        parcel_number="0003",
+        parcel_area_ha=0,
+        source_id="parcel-source",
+        geometry=parcel_geometry,
+    )
+
+    result = calculate_affected_parcels(parcel_geometry, (parcel,), ())
+
+    assert result == ()
+
+
+def test_calculate_affected_parcels_ignores_unrepresentable_forest_area() -> None:
+    parcel_geometry = MultiPolygon(
+        [Polygon([(0, 0), (0.01, 0), (0.01, 0.01), (0, 0.01)])]
+    )
+    tiny_forest_geometry = MultiPolygon(
+        [
+            Polygon(
+                [
+                    (0.005, 0.005),
+                    (0.005001, 0.005),
+                    (0.005001, 0.005001),
+                    (0.005, 0.005001),
+                ]
+            )
+        ]
+    )
+    parcel = SourceParcel(
+        parcel_uid="parcel-subprecision-forest",
+        insee_code="00001",
+        commune_name="Commune",
+        section="AB",
+        parcel_number="0004",
+        parcel_area_ha=_geodesic_area_ha(parcel_geometry),
+        source_id="parcel-source",
+        geometry=parcel_geometry,
+    )
+    forest = SourceForest(
+        forest_source_id="00:forest-subprecision",
+        forest_type_code="FF1",
+        forest_type_label="Futaie de conifères",
+        dominant_species="Pin maritime",
+        source_id="forest-source",
+        geometry=tiny_forest_geometry,
+    )
+
+    result = calculate_affected_parcels(parcel_geometry, (parcel,), (forest,))
+
+    assert result[0].forest_area_ha == 0
+    assert result[0].compositions == ()
+    assert result[0].confidence == "low"
+
+
 def test_import_parcels_cli_dry_run_returns_summary(
     tmp_path: Path, capsys: pytest.CaptureFixture
 ) -> None:

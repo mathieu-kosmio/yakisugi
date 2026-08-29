@@ -93,6 +93,8 @@ def calculate_affected_parcels(
 ) -> tuple[AffectedParcel, ...]:
     results: list[AffectedParcel] = []
     for parcel in parcels:
+        if parcel.parcel_area_ha <= 0:
+            continue
         affected_geometry_raw = parcel.geometry.intersection(incident_geometry)
         if affected_geometry_raw.is_empty:
             continue
@@ -100,7 +102,7 @@ def calculate_affected_parcels(
             affected_geometry = _as_multipolygon(affected_geometry_raw)
         except ValueError as error:
             raise ParcelProcessingError(str(error)) from error
-        affected_area_ha = round(_geodesic_area_ha(affected_geometry), 4)
+        affected_area_ha = _geodesic_area_ha(affected_geometry, precision=4)
 
         forest_parts: list[BaseGeometry] = []
         composition_parts: dict[tuple[str, str | None], list[BaseGeometry]] = defaultdict(list)
@@ -117,18 +119,21 @@ def calculate_affected_parcels(
         compositions: list[ForestComposition] = []
         if forest_parts:
             forest_union = _as_multipolygon(unary_union(forest_parts))
-            forest_area_ha = round(_geodesic_area_ha(forest_union), 4)
-            for (forest_type, species), parts in composition_parts.items():
-                composition_geometry = _as_multipolygon(unary_union(parts))
-                area_ha = round(_geodesic_area_ha(composition_geometry), 4)
-                compositions.append(
-                    ForestComposition(
-                        forest_type=forest_type,
-                        species=species,
-                        area_ha=area_ha,
-                        percentage=round(area_ha / forest_area_ha * 100, 4),
+            forest_area_ha = _geodesic_area_ha(forest_union, precision=4)
+            if forest_area_ha > 0:
+                for (forest_type, species), parts in composition_parts.items():
+                    composition_geometry = _as_multipolygon(unary_union(parts))
+                    area_ha = _geodesic_area_ha(composition_geometry, precision=4)
+                    if area_ha <= 0:
+                        continue
+                    compositions.append(
+                        ForestComposition(
+                            forest_type=forest_type,
+                            species=species,
+                            area_ha=area_ha,
+                            percentage=round(area_ha / forest_area_ha * 100, 4),
+                        )
                     )
-                )
             compositions.sort(key=lambda item: item.area_ha, reverse=True)
 
         dominant_species = next(

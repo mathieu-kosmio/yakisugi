@@ -161,3 +161,58 @@ Le mode `--dry-run` valide la présence de l'incident et compte les lignes sans 
   --incident EMSR899 \
   --dry-run
 ```
+
+## Chargement du snapshot réel EMSR899
+
+Les commandes ci-dessous utilisent les fichiers contrôlés le 28 août 2026. `DATABASE_URL` doit rester dans `.env.local` ou dans le gestionnaire de secrets du runner.
+
+```bash
+set -a
+source .env.local
+set +a
+
+.venv/bin/python scripts/import_incident.py \
+  --file data/incidents/EMSR899/observed-event.json \
+  --name "Incendie du Porge et de Lacanau 2026" \
+  --external-id EMSR899 \
+  --start-date 2026-07-22 \
+  --source-url https://mapping.emergency.copernicus.eu/activations/EMSR899/ \
+  --source-date 2026-07-30 \
+  --department-codes 33
+
+.venv/bin/python scripts/import_forest.py \
+  --file data/forest/bdforet-v2-emsr899-bbox.json \
+  --department 33 \
+  --source-url "https://data.geopf.fr/wfs/ows?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetCapabilities" \
+  --source-date 2026-05-13 \
+  --id-column id \
+  --type-code-column code_tfv \
+  --type-label-column tfv \
+  --species-column essence
+
+.venv/bin/python scripts/process_forests.py --incident EMSR899
+
+.venv/bin/python scripts/import_parcels.py \
+  --file data/cadastre/cadastre-emsr899-parcelles.gpkg \
+  --source-url https://cadastre.data.gouv.fr/data/etalab-cadastre/2026-06-01/geojson/communes \
+  --source-date 2026-06-01 \
+  --commune-name-column commune_name
+
+.venv/bin/python scripts/process_parcels.py --incident EMSR899
+
+.venv/bin/python scripts/import_industries.py \
+  --file data/sirene/yakisugi-industries.csv \
+  --geocoding-cache data/sirene/geocoding-cache.json \
+  --source-url https://annuaire-entreprises.data.gouv.fr/export-sirene \
+  --source-date 2026-08-24
+
+.venv/bin/python scripts/calculate_distances.py --incident EMSR899
+```
+
+Après contrôle des compteurs et des géométries, publier l'incident avec une requête SQL exécutée depuis un client de confiance :
+
+```sql
+update public.incidents
+set status = 'published', updated_at = now()
+where external_id = 'EMSR899';
+```

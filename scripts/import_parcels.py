@@ -114,7 +114,7 @@ def prepare_parcels(
                 commune_name=resolved_commune_name,
                 section=section,
                 parcel_number=parcel_number,
-                parcel_area_ha=round(_geodesic_area_ha(geometry), 4),
+                parcel_area_ha=_geodesic_area_ha(geometry, precision=4),
                 geometry=geometry,
             )
         )

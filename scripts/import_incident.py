@@ -109,13 +109,13 @@ def _as_multipolygon(geometry: BaseGeometry) -> MultiPolygon:
     return result
 
 
-def _geodesic_area_ha(geometry: MultiPolygon) -> float:
+def _geodesic_area_ha(geometry: MultiPolygon, *, precision: int = 2) -> float:
     geod = Geod(ellps="WGS84")
     area_m2, _ = geod.geometry_area_perimeter(geometry)
     area_ha = abs(area_m2) / 10_000
     if area_ha <= 0:
         raise IncidentImportError("La superficie calculée est nulle.")
-    return round(area_ha, 2)
+    return round(area_ha, precision)
 
 
 def prepare_incident(path: Path) -> PreparedIncident:

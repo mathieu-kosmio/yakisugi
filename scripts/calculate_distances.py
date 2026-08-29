@@ -71,13 +71,18 @@ def calculate_distances(
         for incident in incidents:
             cursor.execute(
                 """
+                with incident_point as materialized (
+                  select extensions.ST_Centroid(geometry) as geometry
+                  from public.incidents
+                  where id = %s
+                )
                 select count(*) as site_count
                 from public.industrial_sites site
-                join public.incidents incident on incident.id = %s
+                cross join incident_point
                 where site.active
                   and extensions.ST_DistanceSphere(
                     site.location,
-                    extensions.ST_Centroid(incident.geometry)
+                    incident_point.geometry
                   ) / 1000 <= %s
                 """,
                 (incident["id"], max_distance_km),
@@ -90,15 +95,20 @@ def calculate_distances(
                 )
                 cursor.execute(
                     """
-                    with distances as (
+                    with incident_point as materialized (
+                      select extensions.ST_Centroid(geometry) as geometry
+                      from public.incidents
+                      where id = %s
+                    ),
+                    distances as (
                       select
                         site.id as industrial_site_id,
                         extensions.ST_DistanceSphere(
                           site.location,
-                          extensions.ST_Centroid(incident.geometry)
+                          incident_point.geometry
                         ) / 1000 as distance_km
                       from public.industrial_sites site
-                      join public.incidents incident on incident.id = %s
+                      cross join incident_point
                       where site.active
                     )
                     insert into public.incident_industrial_sites (
