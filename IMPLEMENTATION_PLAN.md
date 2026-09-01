@@ -56,6 +56,7 @@ Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 e
 | T-020 | DONE | T-018 | `app/api/health/`, `tests/`, `docs/` | Healthcheck refusant une configuration Supabase incomplète |
 | T-021 | DONE | T-018 | `app/carte/`, `components/map/`, `lib/data/`, `tests/`, `docs/` | Carte Supabase chargée sans géométries complètes redondantes ni requêtes en cascade |
 | T-022 | DONE | T-021 | `lib/data/`, `tests/`, `docs/` | Validation compatible avec les réponses Supabase limitées à `geometry_web` |
+| T-023 | DONE | T-022 | `components/map/`, `app/`, `tests/`, `docs/` | Nom du site industriel visible au survol de son marqueur |
 
 ## Preuves de vérification
 
@@ -166,6 +167,9 @@ Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 e
 | 2026-09-01 | T-021 | `npm run smoke:web` | 9 parcours HTTP réussis, carte fixture en 9 ms |
 | 2026-09-01 | T-022 | test de non-régression Supabase | Échec rouge reproduit lorsque `geometry` est absente et `geometry_web` présente, puis réussite après assouplissement contrôlé du validateur |
 | 2026-09-01 | T-022 | `npm run check` et `npm run build` | 64 tests, lint, types et build de production réussis |
+| 2026-09-01 | T-023 | test de non-régression ciblé | Échec rouge observé avant l'ajout du lecteur de nom, puis 2 assertions réussies sur le nom présent et absent |
+| 2026-09-01 | T-023 | `npm run check` | Biome, TypeScript et 66 tests réussis |
+| 2026-09-01 | T-023 | `npm run build` et `npm run smoke:web` | Build de production réussi et 9 parcours HTTP locaux réussis, dont la carte |
 
 ## Journal de session
 
@@ -261,10 +265,15 @@ Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 e
 
 - T-022 terminée localement : la sélection optimisée Supabase omettait légitimement `geometry`, mais les schémas Zod l'exigeaient encore. Les validateurs acceptent désormais une géométrie web ou source, tout en refusant une ligne sans géométrie.
 
+### 2026-09-01, libellé des marqueurs industriels
+
+- T-023 saisie : afficher le nom du site industriel au survol de son marqueur, en utilisant le nom déjà présent dans les données cartographiques.
+- T-023 terminée localement : le survol d'un marqueur ouvre une infobulle contenant uniquement le nom publié de l'établissement. Le contenu est ajouté comme texte DOM, ce qui évite l'interprétation de données externes, et l'infobulle disparaît à la sortie du marqueur.
+
 ## Reste à faire
 
-T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. Le snapshot réel EMSR899 est publié et contrôlé dans Supabase. T-018 est bloquée par la configuration d'exécution Coolify à vérifier après le signalement de la carte absente. Les changements T-019 à T-022 doivent être commités, redéployés puis contrôlés dans le navigateur public. Les clés Stripe seront utiles uniquement lors de sa réactivation.
+T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. Le snapshot réel EMSR899 est publié et contrôlé dans Supabase. T-018 est bloquée par la configuration d'exécution Coolify à vérifier après le signalement de la carte absente. Les changements T-019 à T-023 doivent être commités, redéployés puis contrôlés dans le navigateur public. Les clés Stripe seront utiles uniquement lors de sa réactivation.
 
 ## Prochaine tâche saisissable
 
-Dans Coolify, vérifier que `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` et `YAKISUGI_DATA_SOURCE=supabase` sont disponibles à l'exécution, sans exposer les valeurs. Commiter et redéployer T-019 à T-022, attendre un healthcheck `200`, puis vérifier publiquement la carte EMSR899, le sélecteur Plan/Satellite, `/mentions-legales`, la fiche événement, les filtres et les API.
+Dans Coolify, vérifier que `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` et `YAKISUGI_DATA_SOURCE=supabase` sont disponibles à l'exécution, sans exposer les valeurs. Commiter et redéployer T-019 à T-023, attendre un healthcheck `200`, puis vérifier publiquement la carte EMSR899, le survol des sites industriels, le sélecteur Plan/Satellite, `/mentions-legales`, la fiche événement, les filtres et les API.

@@ -693,6 +693,20 @@ a {
   border-radius: 12px;
 }
 
+.maplibregl-popup-content {
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  box-shadow: 0 10px 28px rgba(20, 33, 26, 0.2);
+}
+
+.industry-marker-tooltip {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
 .site-footer {
   border-top: 1px solid var(--line);
   padding-block: 2rem;

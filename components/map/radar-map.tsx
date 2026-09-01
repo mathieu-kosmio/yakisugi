@@ -1,8 +1,13 @@
 "use client";
 
-import type { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
+import type {
+  GeoJSONSource,
+  Map as MapLibreMap,
+  Popup as MapLibrePopup,
+} from "maplibre-gl";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { getIndustryMarkerName } from "@/components/map/industry-marker-tooltip";
 import {
   type MapBaseLayer,
   MapBaseLayerSwitch,
@@ -108,6 +113,7 @@ export function RadarMap({ fixture }: RadarMapProps) {
 
     let disposed = false;
     let activeMap: MapLibreMap | null = null;
+    let industryPopup: MapLibrePopup | null = null;
 
     void import("maplibre-gl").then(({ default: maplibregl }) => {
       if (disposed || !mapContainerRef.current || mapRef.current) return;
@@ -219,6 +225,12 @@ export function RadarMap({ fixture }: RadarMapProps) {
           },
         });
 
+        industryPopup = new maplibregl.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 10,
+        });
+
         map.on("click", "parcel-fill", (event) => {
           const id = event.features?.[0]?.properties?.id;
           const parcel = fixture.parcels.features.find(
@@ -234,11 +246,31 @@ export function RadarMap({ fixture }: RadarMapProps) {
         map.on("mouseleave", "parcel-fill", () => {
           map.getCanvas().style.cursor = "";
         });
+        map.on("mouseenter", "industry-points", (event) => {
+          const companyName = getIndustryMarkerName(
+            event.features?.[0]?.properties,
+          );
+          if (!companyName || !industryPopup) return;
+
+          const content = document.createElement("p");
+          content.className = "industry-marker-tooltip";
+          content.textContent = companyName;
+          industryPopup
+            .setLngLat(event.lngLat)
+            .setDOMContent(content)
+            .addTo(map);
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", "industry-points", () => {
+          industryPopup?.remove();
+          map.getCanvas().style.cursor = "";
+        });
       });
     });
 
     return () => {
       disposed = true;
+      industryPopup?.remove();
       activeMap?.remove();
       if (mapRef.current === activeMap) mapRef.current = null;
     };
