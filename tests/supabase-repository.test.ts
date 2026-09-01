@@ -191,16 +191,19 @@ function repositoryFor(responses: Record<string, QueryResponse[]>) {
 
 describe("SupabaseRadarRepository", () => {
   it("loads the map dataset with web geometries and one parallel read phase", async () => {
+    const { geometry: _incidentGeometry, ...incidentWebRow } = incidentRow;
+    const { geometry: _forestGeometry, ...forestWebRow } = forestRow;
+    const { geometry: _parcelGeometry, ...parcelWebRow } = parcelRow;
     const { client, repository } = repositoryFor({
       incidents: [
-        { data: { ...incidentRow, geometry_web: polygon }, error: null },
+        { data: { ...incidentWebRow, geometry_web: polygon }, error: null },
       ],
       affected_forests: [
-        { data: [{ ...forestRow, geometry_web: polygon }], error: null },
+        { data: [{ ...forestWebRow, geometry_web: polygon }], error: null },
       ],
       affected_parcels: [
         {
-          data: [{ ...parcelRow, geometry_web: polygon }],
+          data: [{ ...parcelWebRow, geometry_web: polygon }],
           error: null,
           count: 1,
         },

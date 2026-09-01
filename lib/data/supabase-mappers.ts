@@ -19,6 +19,24 @@ const polygonGeometrySchema = z.custom<Polygon | MultiPolygon>(
   "Expected a GeoJSON Polygon or MultiPolygon",
 );
 
+const geometrySelectionSchema = {
+  geometry: polygonGeometrySchema.optional(),
+  geometry_web: polygonGeometrySchema.nullable().optional(),
+};
+
+type GeometrySelection = {
+  geometry?: Polygon | MultiPolygon;
+  geometry_web?: Polygon | MultiPolygon | null;
+};
+
+function selectWebGeometry(row: GeometrySelection): Polygon | MultiPolygon {
+  const geometry = row.geometry_web ?? row.geometry;
+  if (!geometry) {
+    throw new Error("A web or source geometry is required");
+  }
+  return geometry;
+}
+
 const incidentSummaryRowSchema = z.object({
   id: z.uuid(),
   slug: z.string(),
@@ -43,8 +61,7 @@ const incidentRowSchema = z.object({
   source_date: z.string().nullable(),
   area_ha: z.coerce.number(),
   status: z.literal("published"),
-  geometry: polygonGeometrySchema,
-  geometry_web: polygonGeometrySchema.nullable().optional(),
+  ...geometrySelectionSchema,
 });
 
 const forestRowSchema = z.object({
@@ -53,8 +70,7 @@ const forestRowSchema = z.object({
   forest_type_label: z.string(),
   dominant_species: z.string().nullable(),
   area_ha: z.coerce.number(),
-  geometry: polygonGeometrySchema,
-  geometry_web: polygonGeometrySchema.nullable().optional(),
+  ...geometrySelectionSchema,
 });
 
 const parcelRowSchema = z.object({
@@ -73,8 +89,7 @@ const parcelRowSchema = z.object({
   estimated_volume_min_m3: z.coerce.number().nullable(),
   estimated_volume_max_m3: z.coerce.number().nullable(),
   confidence: z.enum(["low", "medium", "high"]),
-  geometry: polygonGeometrySchema,
-  geometry_web: polygonGeometrySchema.nullable().optional(),
+  ...geometrySelectionSchema,
 });
 
 const industryProximityRowSchema = z.object({
@@ -118,7 +133,7 @@ export function mapIncidentRow(input: unknown): IncidentFeature {
   return {
     type: "Feature",
     id: row.id,
-    geometry: row.geometry_web ?? row.geometry,
+    geometry: selectWebGeometry(row),
     properties: {
       id: row.id,
       slug: row.slug,
@@ -139,7 +154,7 @@ export function mapForestRow(input: unknown): ForestFeature {
   return {
     type: "Feature",
     id: row.id,
-    geometry: row.geometry_web ?? row.geometry,
+    geometry: selectWebGeometry(row),
     properties: {
       id: row.id,
       incidentId: row.incident_id,
@@ -155,7 +170,7 @@ export function mapParcelRow(input: unknown): ParcelFeature {
   return {
     type: "Feature",
     id: row.id,
-    geometry: row.geometry_web ?? row.geometry,
+    geometry: selectWebGeometry(row),
     properties: {
       id: row.id,
       incidentId: row.incident_id,

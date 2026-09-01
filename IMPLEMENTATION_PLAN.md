@@ -55,6 +55,7 @@ Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 e
 | T-019 | DONE | T-016 | `components/map/`, `app/`, `tests/`, `docs/` | Fond satellite IGN activable et informations légales de l'éditeur implémentés et vérifiés |
 | T-020 | DONE | T-018 | `app/api/health/`, `tests/`, `docs/` | Healthcheck refusant une configuration Supabase incomplète |
 | T-021 | DONE | T-018 | `app/carte/`, `components/map/`, `lib/data/`, `tests/`, `docs/` | Carte Supabase chargée sans géométries complètes redondantes ni requêtes en cascade |
+| T-022 | DONE | T-021 | `lib/data/`, `tests/`, `docs/` | Validation compatible avec les réponses Supabase limitées à `geometry_web` |
 
 ## Preuves de vérification
 
@@ -163,6 +164,8 @@ Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 e
 | 2026-09-01 | T-021 | `npm run check` | Biome, TypeScript et 64 tests réussis |
 | 2026-09-01 | T-021 | `npm run build` | Build de production réussi avec `/carte` dynamique et son état de chargement |
 | 2026-09-01 | T-021 | `npm run smoke:web` | 9 parcours HTTP réussis, carte fixture en 9 ms |
+| 2026-09-01 | T-022 | test de non-régression Supabase | Échec rouge reproduit lorsque `geometry` est absente et `geometry_web` présente, puis réussite après assouplissement contrôlé du validateur |
+| 2026-09-01 | T-022 | `npm run check` et `npm run build` | 64 tests, lint, types et build de production réussis |
 
 ## Journal de session
 
@@ -254,10 +257,14 @@ Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 e
 - T-021 saisie : les mesures Supabase identifient le transfert de géométries complètes et simplifiées pour la même carte, ainsi que des lectures successives évitables. La correction conserve les géométries sources et les exports complets.
 - T-021 terminée localement : les lectures cartographiques utilisent `geometry_web`, ne consultent la géométrie complète qu'en secours pour les données historiques, regroupent les couches indépendantes et retardent l'import de MapLibre. Un état de chargement route rend la navigation immédiatement visible.
 
+### 2026-09-01, correctif de rendu serveur de la carte
+
+- T-022 terminée localement : la sélection optimisée Supabase omettait légitimement `geometry`, mais les schémas Zod l'exigeaient encore. Les validateurs acceptent désormais une géométrie web ou source, tout en refusant une ligne sans géométrie.
+
 ## Reste à faire
 
-T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. Le snapshot réel EMSR899 est publié et contrôlé dans Supabase. T-018 est bloquée par la configuration d'exécution Coolify à vérifier après le signalement de la carte absente. Les changements T-019 à T-021 doivent être commités, redéployés puis contrôlés dans le navigateur public. Les clés Stripe seront utiles uniquement lors de sa réactivation.
+T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. Le snapshot réel EMSR899 est publié et contrôlé dans Supabase. T-018 est bloquée par la configuration d'exécution Coolify à vérifier après le signalement de la carte absente. Les changements T-019 à T-022 doivent être commités, redéployés puis contrôlés dans le navigateur public. Les clés Stripe seront utiles uniquement lors de sa réactivation.
 
 ## Prochaine tâche saisissable
 
-Dans Coolify, vérifier que `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` et `YAKISUGI_DATA_SOURCE=supabase` sont disponibles à l'exécution, sans exposer les valeurs. Commiter et redéployer T-019 à T-021, attendre un healthcheck `200`, puis vérifier publiquement la carte EMSR899, le sélecteur Plan/Satellite, `/mentions-legales`, la fiche événement, les filtres et les API.
+Dans Coolify, vérifier que `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` et `YAKISUGI_DATA_SOURCE=supabase` sont disponibles à l'exécution, sans exposer les valeurs. Commiter et redéployer T-019 à T-022, attendre un healthcheck `200`, puis vérifier publiquement la carte EMSR899, le sélecteur Plan/Satellite, `/mentions-legales`, la fiche événement, les filtres et les API.
