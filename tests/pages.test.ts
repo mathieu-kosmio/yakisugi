@@ -14,6 +14,9 @@ describe("event SEO metadata", () => {
     expect(entries.some((entry) => entry.url.includes("/acheter/"))).toBe(
       false,
     );
+    expect(
+      entries.some((entry) => entry.url.endsWith("/mentions-legales")),
+    ).toBe(true);
     expect(robots().rules).toMatchObject({
       disallow: ["/api/", "/acheter/"],
     });

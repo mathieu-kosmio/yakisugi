@@ -51,6 +51,7 @@ try {
   results.push(await check("/carte?incident=saumos-2026-fixture", 200));
   results.push(await check("/evenements/saumos-2026-fixture", 200));
   results.push(await check("/acheter/saumos-2026-fixture", 200));
+  results.push(await check("/mentions-legales", 200));
   results.push(await check("/sitemap.xml", 200, 100_000));
   results.push(await check("/robots.txt", 200, 10_000));
   results.push(await check("/api/health", 200, 10_000));

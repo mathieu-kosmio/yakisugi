@@ -190,6 +190,61 @@ function repositoryFor(responses: Record<string, QueryResponse[]>) {
 }
 
 describe("SupabaseRadarRepository", () => {
+  it("loads the map dataset with web geometries and one parallel read phase", async () => {
+    const { client, repository } = repositoryFor({
+      incidents: [
+        { data: { ...incidentRow, geometry_web: polygon }, error: null },
+      ],
+      affected_forests: [
+        { data: [{ ...forestRow, geometry_web: polygon }], error: null },
+      ],
+      affected_parcels: [
+        {
+          data: [{ ...parcelRow, geometry_web: polygon }],
+          error: null,
+          count: 1,
+        },
+      ],
+      incident_industrial_sites: [
+        { data: [industryRow], error: null, count: 1 },
+      ],
+    });
+
+    const result = await repository.getRadarDataBySlug("saumos-2026");
+
+    expect(result?.incident.properties.externalId).toBe("EMSR899");
+    expect(result?.forests.features).toHaveLength(1);
+    expect(result?.parcels.features).toHaveLength(1);
+    expect(result?.industries.features).toHaveLength(1);
+    expect(client.queries).toHaveLength(4);
+
+    for (const query of client.queries.filter((candidate) =>
+      ["incidents", "affected_forests", "affected_parcels"].includes(
+        candidate.table,
+      ),
+    )) {
+      const select = query.operations.find(
+        ([operation]) => operation === "select",
+      )?.[1];
+      expect(select).toContain("geometry_web");
+      expect(select).not.toMatch(/(^|,)geometry(,|$)/);
+    }
+
+    for (const query of client.queries.filter((candidate) =>
+      [
+        "affected_forests",
+        "affected_parcels",
+        "incident_industrial_sites",
+      ].includes(candidate.table),
+    )) {
+      expect(query.operations).toContainEqual([
+        "eq",
+        "incident_id",
+        incidentId,
+      ]);
+    }
+  });
+
   it("lists incident summaries and surfaces Supabase errors", async () => {
     const success = repositoryFor({
       incident_summaries: [{ data: [summaryRow], error: null }],
@@ -215,9 +270,15 @@ describe("SupabaseRadarRepository", () => {
 
   it("loads a published incident with its summary and forests", async () => {
     const { repository } = repositoryFor({
-      incidents: [{ data: incidentRow, error: null }],
+      incidents: [
+        { data: incidentRow, error: null },
+        { data: [{ id: incidentId, geometry: polygon }], error: null },
+      ],
       incident_summaries: [{ data: summaryRow, error: null }],
-      affected_forests: [{ data: [forestRow], error: null }],
+      affected_forests: [
+        { data: [forestRow], error: null },
+        { data: [{ id: forestId, geometry: polygon }], error: null },
+      ],
     });
 
     const detail = await repository.getIncidentBySlug("saumos-2026");
@@ -237,7 +298,10 @@ describe("SupabaseRadarRepository", () => {
   it("paginates and filters affected parcels", async () => {
     const { client, repository } = repositoryFor({
       incidents: [{ data: { id: incidentId }, error: null }],
-      affected_parcels: [{ data: [parcelRow], error: null, count: 3 }],
+      affected_parcels: [
+        { data: [parcelRow], error: null, count: 3 },
+        { data: [{ id: parcelId, geometry: polygon }], error: null },
+      ],
     });
 
     const result = await repository.listParcelsByIncident("saumos-2026", {
@@ -274,7 +338,10 @@ describe("SupabaseRadarRepository", () => {
 
   it("hides parcels belonging to an unpublished incident", async () => {
     const hidden = repositoryFor({
-      affected_parcels: [{ data: parcelRow, error: null }],
+      affected_parcels: [
+        { data: parcelRow, error: null },
+        { data: [{ id: parcelId, geometry: polygon }], error: null },
+      ],
       incidents: [{ data: null, error: null }],
     });
     await expect(hidden.repository.getParcelById(parcelId)).resolves.toBeNull();

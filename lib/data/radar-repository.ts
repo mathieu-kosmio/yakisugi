@@ -55,24 +55,5 @@ export async function listIndustriesByIncident(
 export async function getRadarDataBySlug(
   slug: string,
 ): Promise<RadarFixture | null> {
-  const radarRepository = getRepository();
-  const detail = await radarRepository.getIncidentBySlug(slug);
-  if (!detail) {
-    return null;
-  }
-
-  const [parcels, industries] = await Promise.all([
-    radarRepository.listParcelsByIncident(slug),
-    radarRepository.listIndustriesByIncident(slug),
-  ]);
-  if (!parcels || !industries) {
-    return null;
-  }
-
-  return {
-    incident: detail.feature,
-    forests: detail.forests,
-    parcels: { type: "FeatureCollection", features: parcels.data },
-    industries: { type: "FeatureCollection", features: industries.data },
-  };
+  return getRepository().getRadarDataBySlug(slug);
 }

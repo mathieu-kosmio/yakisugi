@@ -84,11 +84,15 @@ YAKISUGI_EXPORT_BUCKET=incident-exports
 ANALYTICS_HASH_SALT=SECRET_ALEATOIRE_DISTINCT
 ```
 
-6. Ajouter `NEXT_PUBLIC_MAP_STYLE_URL` comme variable disponible pendant la construction. Les variables `NEXT_PUBLIC_*` utilisées par le navigateur sont intégrées au bundle au moment du build.
+`NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` et `YAKISUGI_DATA_SOURCE` doivent être disponibles à l'exécution. Dans le code actuel, l'URL Supabase est lue uniquement côté serveur malgré son préfixe historique `NEXT_PUBLIC_`. Les deux variables Supabase peuvent donc conserver `Build Variable` désactivé. La clé reste privée et ne doit jamais être exposée comme variable publique ou injectée dans le bundle.
+
+6. Ajouter `NEXT_PUBLIC_MAP_STYLE_URL` comme variable disponible pendant la construction. `NEXT_PUBLIC_SATELLITE_TILE_URL` peut remplacer le flux d'orthophotographie IGN configuré par défaut. Pour ces deux variables cartographiques, activer `Build Variable` ; elles sont intégrées au bundle au moment du build.
 7. Déclencher le déploiement puis contrôler `/api/health`, `/`, `/carte` et une fiche événement.
 8. Activer les déploiements automatiques uniquement après la réussite du premier déploiement manuel.
 
 La clé Supabase secrète ne doit jamais être déclarée comme variable de build publique. Le conteneur final fonctionne sous un utilisateur non privilégié et utilise la sortie Next.js `standalone`.
+
+Lorsque `YAKISUGI_DATA_SOURCE=supabase`, `/api/health` retourne `503` avec `check=data-source-config` si l'URL ou la clé serveur Supabase manque à l'exécution. Ce contrôle évite qu'un conteneur soit déclaré sain alors que les pages de données échouent avant leur rendu.
 
 ## 4. Traiter les demandes et paiements externes
 

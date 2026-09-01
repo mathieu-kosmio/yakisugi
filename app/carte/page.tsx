@@ -15,12 +15,11 @@ type MapPageProps = {
 };
 
 export default async function MapPage({ searchParams }: MapPageProps) {
-  const [firstIncident] = await listIncidents();
   const requestedIncident = (await searchParams).incident;
   const slug =
     typeof requestedIncident === "string"
       ? requestedIncident
-      : firstIncident?.slug;
+      : (await listIncidents())[0]?.slug;
   const radarData = slug ? await getRadarDataBySlug(slug) : null;
 
   if (!radarData) {

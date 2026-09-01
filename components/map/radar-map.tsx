@@ -1,11 +1,12 @@
 "use client";
 
-import maplibregl, {
-  type GeoJSONSource,
-  type Map as MapLibreMap,
-} from "maplibre-gl";
+import type { GeoJSONSource, Map as MapLibreMap } from "maplibre-gl";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type MapBaseLayer,
+  MapBaseLayerSwitch,
+} from "@/components/map/map-base-layer-switch";
 import { trackEvent } from "@/lib/analytics/client";
 import { filterParcels, summarizeIncident } from "@/lib/domain/radar";
 import type {
@@ -25,6 +26,10 @@ const speciesColors: Record<string, string> = {
   Chêne: "#b08d57",
 };
 
+const satelliteTileUrl =
+  process.env.NEXT_PUBLIC_SATELLITE_TILE_URL ??
+  "https://data.geopf.fr/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetTile&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}";
+
 function formatHectares(value: number) {
   return `${value.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} ha`;
 }
@@ -32,6 +37,7 @@ function formatHectares(value: number) {
 export function RadarMap({ fixture }: RadarMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
+  const baseLayerRef = useRef<MapBaseLayer>("plan");
   const analyticsTrackedRef = useRef(false);
   const [selectedParcel, setSelectedParcel] = useState<ParcelFeature | null>(
     null,
@@ -43,6 +49,7 @@ export function RadarMap({ fixture }: RadarMapProps) {
     IndustryCategory | ""
   >("");
   const [maxDistance, setMaxDistance] = useState(200);
+  const [baseLayer, setBaseLayer] = useState<MapBaseLayer>("plan");
   const summary = useMemo(() => summarizeIncident(fixture), [fixture]);
   const availableSpecies = useMemo(
     () =>
@@ -99,120 +106,156 @@ export function RadarMap({ fixture }: RadarMapProps) {
       return;
     }
 
-    const map = new maplibregl.Map({
-      container: mapContainerRef.current,
-      style:
-        process.env.NEXT_PUBLIC_MAP_STYLE_URL ??
-        "https://demotiles.maplibre.org/style.json",
-      center: [-1.01, 45.015],
-      zoom: 10.5,
-      attributionControl: false,
+    let disposed = false;
+    let activeMap: MapLibreMap | null = null;
+
+    void import("maplibre-gl").then(({ default: maplibregl }) => {
+      if (disposed || !mapContainerRef.current || mapRef.current) return;
+
+      const map = new maplibregl.Map({
+        container: mapContainerRef.current,
+        style:
+          process.env.NEXT_PUBLIC_MAP_STYLE_URL ??
+          "https://demotiles.maplibre.org/style.json",
+        center: [-1.01, 45.015],
+        zoom: 10.5,
+        attributionControl: false,
+      });
+      activeMap = map;
+      mapRef.current = map;
+
+      map.addControl(
+        new maplibregl.NavigationControl({ showCompass: false }),
+        "top-right",
+      );
+      map.addControl(
+        new maplibregl.AttributionControl({ compact: true }),
+        "bottom-right",
+      );
+
+      map.on("load", () => {
+        map.addSource("satellite", {
+          type: "raster",
+          tiles: [satelliteTileUrl],
+          tileSize: 256,
+          attribution:
+            '<a href="https://www.ign.fr/" target="_blank" rel="noopener noreferrer">IGN</a>',
+        });
+        map.addLayer({
+          id: "satellite-base",
+          type: "raster",
+          source: "satellite",
+          layout: {
+            visibility:
+              baseLayerRef.current === "satellite" ? "visible" : "none",
+          },
+        });
+        map.addSource("incident", { type: "geojson", data: fixture.incident });
+        map.addSource("forests", { type: "geojson", data: fixture.forests });
+        map.addSource("parcels", { type: "geojson", data: fixture.parcels });
+        map.addSource("industries", {
+          type: "geojson",
+          data: fixture.industries,
+        });
+
+        map.addLayer({
+          id: "incident-fill",
+          type: "fill",
+          source: "incident",
+          paint: { "fill-color": "#c75b2b", "fill-opacity": 0.16 },
+        });
+        map.addLayer({
+          id: "incident-line",
+          type: "line",
+          source: "incident",
+          paint: { "line-color": "#9f3f1c", "line-width": 3 },
+        });
+        map.addLayer({
+          id: "forest-fill",
+          type: "fill",
+          source: "forests",
+          paint: {
+            "fill-color": [
+              "match",
+              ["get", "dominantSpecies"],
+              "Pin maritime",
+              speciesColors["Pin maritime"],
+              "Forêt mixte",
+              speciesColors["Forêt mixte"],
+              "Chêne",
+              speciesColors.Chêne,
+              "#8b948c",
+            ],
+            "fill-opacity": 0.46,
+          },
+        });
+        map.addLayer({
+          id: "parcel-fill",
+          type: "fill",
+          source: "parcels",
+          minzoom: 9.5,
+          paint: {
+            "fill-color": "#f1d67d",
+            "fill-opacity": 0.22,
+            "fill-outline-color": "#283a2f",
+          },
+        });
+        map.addLayer({
+          id: "parcel-line",
+          type: "line",
+          source: "parcels",
+          minzoom: 9.5,
+          paint: { "line-color": "#243c2d", "line-width": 1.2 },
+        });
+        map.addLayer({
+          id: "industry-points",
+          type: "circle",
+          source: "industries",
+          paint: {
+            "circle-color": "#f7f6ef",
+            "circle-radius": 6,
+            "circle-stroke-color": "#14211a",
+            "circle-stroke-width": 2,
+          },
+        });
+
+        map.on("click", "parcel-fill", (event) => {
+          const id = event.features?.[0]?.properties?.id;
+          const parcel = fixture.parcels.features.find(
+            (candidate) => candidate.properties.id === id,
+          );
+          if (parcel)
+            trackEvent("parcel_clicked", fixture.incident.properties.slug);
+          setSelectedParcel(parcel ?? null);
+        });
+        map.on("mouseenter", "parcel-fill", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", "parcel-fill", () => {
+          map.getCanvas().style.cursor = "";
+        });
+      });
     });
-
-    map.addControl(
-      new maplibregl.NavigationControl({ showCompass: false }),
-      "top-right",
-    );
-    map.addControl(
-      new maplibregl.AttributionControl({ compact: true }),
-      "bottom-right",
-    );
-
-    map.on("load", () => {
-      map.addSource("incident", { type: "geojson", data: fixture.incident });
-      map.addSource("forests", { type: "geojson", data: fixture.forests });
-      map.addSource("parcels", { type: "geojson", data: fixture.parcels });
-      map.addSource("industries", {
-        type: "geojson",
-        data: fixture.industries,
-      });
-
-      map.addLayer({
-        id: "incident-fill",
-        type: "fill",
-        source: "incident",
-        paint: { "fill-color": "#c75b2b", "fill-opacity": 0.16 },
-      });
-      map.addLayer({
-        id: "incident-line",
-        type: "line",
-        source: "incident",
-        paint: { "line-color": "#9f3f1c", "line-width": 3 },
-      });
-      map.addLayer({
-        id: "forest-fill",
-        type: "fill",
-        source: "forests",
-        paint: {
-          "fill-color": [
-            "match",
-            ["get", "dominantSpecies"],
-            "Pin maritime",
-            speciesColors["Pin maritime"],
-            "Forêt mixte",
-            speciesColors["Forêt mixte"],
-            "Chêne",
-            speciesColors.Chêne,
-            "#8b948c",
-          ],
-          "fill-opacity": 0.46,
-        },
-      });
-      map.addLayer({
-        id: "parcel-fill",
-        type: "fill",
-        source: "parcels",
-        minzoom: 9.5,
-        paint: {
-          "fill-color": "#f1d67d",
-          "fill-opacity": 0.22,
-          "fill-outline-color": "#283a2f",
-        },
-      });
-      map.addLayer({
-        id: "parcel-line",
-        type: "line",
-        source: "parcels",
-        minzoom: 9.5,
-        paint: { "line-color": "#243c2d", "line-width": 1.2 },
-      });
-      map.addLayer({
-        id: "industry-points",
-        type: "circle",
-        source: "industries",
-        paint: {
-          "circle-color": "#f7f6ef",
-          "circle-radius": 6,
-          "circle-stroke-color": "#14211a",
-          "circle-stroke-width": 2,
-        },
-      });
-
-      map.on("click", "parcel-fill", (event) => {
-        const id = event.features?.[0]?.properties?.id;
-        const parcel = fixture.parcels.features.find(
-          (candidate) => candidate.properties.id === id,
-        );
-        if (parcel) {
-          trackEvent("parcel_clicked", fixture.incident.properties.slug);
-        }
-        setSelectedParcel(parcel ?? null);
-      });
-      map.on("mouseenter", "parcel-fill", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-      map.on("mouseleave", "parcel-fill", () => {
-        map.getCanvas().style.cursor = "";
-      });
-    });
-
-    mapRef.current = map;
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      disposed = true;
+      activeMap?.remove();
+      if (mapRef.current === activeMap) mapRef.current = null;
     };
   }, [fixture]);
+
+  function changeBaseLayer(nextLayer: MapBaseLayer) {
+    baseLayerRef.current = nextLayer;
+    setBaseLayer(nextLayer);
+    const map = mapRef.current;
+    if (map?.getLayer("satellite-base")) {
+      map.setLayoutProperty(
+        "satellite-base",
+        "visibility",
+        nextLayer === "satellite" ? "visible" : "none",
+      );
+    }
+  }
 
   useEffect(() => {
     const source = mapRef.current?.getSource("parcels") as
@@ -411,6 +454,7 @@ export function RadarMap({ fixture }: RadarMapProps) {
       </aside>
 
       <div className="radar-map-wrap">
+        <MapBaseLayerSwitch value={baseLayer} onChange={changeBaseLayer} />
         <section
           ref={mapContainerRef}
           className="radar-map"

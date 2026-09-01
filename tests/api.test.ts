@@ -1,11 +1,33 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { POST as postAnalytics } from "@/app/api/analytics/route";
+import { GET as getHealth } from "@/app/api/health/route";
 import { GET as getIndustries } from "@/app/api/v1/incidents/[slug]/industries/route";
 import { GET as getParcels } from "@/app/api/v1/incidents/[slug]/parcels/route";
 import { GET as getIncident } from "@/app/api/v1/incidents/[slug]/route";
 import { GET as getIncidents } from "@/app/api/v1/incidents/route";
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe("fixture API", () => {
+  it("reports an unhealthy service when Supabase credentials are incomplete", async () => {
+    vi.stubEnv("YAKISUGI_DATA_SOURCE", "supabase");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    vi.stubEnv("SUPABASE_SECRET_KEY", "");
+    vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "");
+
+    const response = getHealth();
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body).toEqual({
+      status: "error",
+      service: "yakisugi",
+      check: "data-source-config",
+    });
+  });
+
   it("accepts only a bounded first-party analytics event", async () => {
     const accepted = await postAnalytics(
       new Request("http://local/api/analytics", {

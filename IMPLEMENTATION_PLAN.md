@@ -1,6 +1,6 @@
 # Plan d'implémentation de Yakisugi
 
-Dernière mise à jour : 29 août 2026
+Dernière mise à jour : 1er septembre 2026
 
 ## Décisions actives
 
@@ -14,7 +14,7 @@ Dernière mise à jour : 29 août 2026
 
 ## État courant
 
-Le MVP complet est déployé dans Coolify sur HTTPS et fonctionne publiquement en mode fixtures : application cartographique, export déterministe, demande commerciale, analytics agrégés, SEO et contrôles de sécurité. Le snapshot réel EMSR899 est chargé et publié dans Supabase : 31 602,37 ha d'incident, 3 615 formations forestières sources, 11 786 parcelles affectées et 2 019 établissements industriels. La bascule Coolify vers Supabase et la recette publique restent à exécuter.
+Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 est chargé et publié dans Supabase : 31 602,37 ha d'incident, 3 615 formations forestières sources, 11 786 parcelles affectées et 2 019 établissements industriels. Le healthcheck vérifie désormais la configuration Supabase. La carte a été optimisée localement : elle lit seulement les géométries web quand elles existent, regroupe les lectures indépendantes, évite la liste d'incidents déjà connue et reporte le chargement de MapLibre. La recette publique complète attend la correction des variables Coolify, le redéploiement et le contrôle navigateur.
 
 ## Jalons
 
@@ -51,7 +51,10 @@ Le MVP complet est déployé dans Coolify sur HTTPS et fonctionne publiquement e
 | T-015B | DONE | T-014 | `app/acheter/`, `lib/sales/`, `scripts/admin/`, `supabase/` | Formulaire de contact, paiement externe et livraison administrée |
 | T-016 | DONE | T-012, T-015 | transversal | Tests E2E, performance, analytics et déploiement |
 | T-017 | DONE | T-009 | `scripts/`, `tests/etl/`, `docs/data/`, `data/sirene/` | Extraction SIRENE officielle ciblée, normalisée, tracée et validée à blanc |
-| T-018 | IN_PROGRESS | T-003B, T-016, T-017 | `supabase/`, `scripts/`, `data/`, Coolify | Migrations et données réelles publiées, contrôlées puis servies par le site |
+| T-018 | BLOCKED | T-003B, T-016, T-017 | `supabase/`, `scripts/`, `data/`, Coolify | Migrations et données réelles publiées, contrôlées puis servies par le site |
+| T-019 | DONE | T-016 | `components/map/`, `app/`, `tests/`, `docs/` | Fond satellite IGN activable et informations légales de l'éditeur implémentés et vérifiés |
+| T-020 | DONE | T-018 | `app/api/health/`, `tests/`, `docs/` | Healthcheck refusant une configuration Supabase incomplète |
+| T-021 | DONE | T-018 | `app/carte/`, `components/map/`, `lib/data/`, `tests/`, `docs/` | Carte Supabase chargée sans géométries complètes redondantes ni requêtes en cascade |
 
 ## Preuves de vérification
 
@@ -144,6 +147,22 @@ Le MVP complet est déployé dans Coolify sur HTTPS et fonctionne publiquement e
 | 2026-08-29 | T-018 | `.venv/bin/pytest -q tests/etl` | 52 tests réussis, 7 tests d'intégration ignorés sans base locale |
 | 2026-08-29 | T-018 | `npm run build` | Build Next.js de production réussi avec 19 routes |
 | 2026-08-29 | T-018 | export réel en simulation | 11 786 parcelles et 2 019 industries validées sans écriture |
+| 2026-08-31 | T-019 | requête WMTS IGN ciblée | Tuile `ORTHOIMAGERY.ORTHOPHOTOS` de la zone de Saumos reçue en HTTP 200 |
+| 2026-08-31 | T-019 | `npm run check` | Biome, TypeScript et 61 tests réussis, sélecteur accessible et sitemap inclus |
+| 2026-08-31 | T-019 | `npm run build` | Build de production réussi avec la route statique `/mentions-legales` |
+| 2026-08-31 | T-019 | `npm run smoke:web` | 9 parcours HTTP réussis, dont carte, mentions légales, sitemap et santé |
+| 2026-09-01 | T-020 | reproduction navigateur locale | `/carte` sans canvas et erreur serveur lorsque Supabase est sélectionné sans ses variables d'exécution |
+| 2026-09-01 | T-020 | test de non-régression ciblé | Échec observé en rouge avant correction : healthcheck `200` au lieu de `503`, puis réussite après correction |
+| 2026-09-01 | T-020 | `npm run check` | Biome, TypeScript et 62 tests réussis |
+| 2026-09-01 | T-020 | `npm run build` | Build Next.js de production réussi |
+| 2026-09-01 | T-020 | requête HTTP locale | `/api/health` retourne `503` et `check=data-source-config` avec une configuration Supabase incomplète |
+| 2026-09-01 | T-020 | `docker build -t yakisugi:local .` | Image standalone construite avec les variables cartographiques publiques configurables |
+| 2026-09-01 | T-020 | conteneur Docker sans secrets Supabase | Conteneur démarré et healthcheck en `503`, conforme au blocage attendu |
+| 2026-09-01 | T-021 | mesures Supabase en lecture seule | Les requêtes cartographiques transféraient environ 37,8 Mo de géométries complètes et web ; le chemin optimisé conserve environ 9,4 Mo de géométries web, soit une réduction estimée de 75 % avant sérialisation HTTP |
+| 2026-09-01 | T-021 | test de non-régression ciblé | Jeu cartographique chargé en quatre requêtes, avec les trois lectures de couches en parallèle et sans colonne `geometry` complète lorsqu'une géométrie web est disponible |
+| 2026-09-01 | T-021 | `npm run check` | Biome, TypeScript et 64 tests réussis |
+| 2026-09-01 | T-021 | `npm run build` | Build de production réussi avec `/carte` dynamique et son état de chargement |
+| 2026-09-01 | T-021 | `npm run smoke:web` | 9 parcours HTTP réussis, carte fixture en 9 ms |
 
 ## Journal de session
 
@@ -213,10 +232,32 @@ Le MVP complet est déployé dans Coolify sur HTTPS et fonctionne publiquement e
 - Le centroïde de l'incident est matérialisé une fois par calcul de distances afin d'éviter le recalcul de la géométrie Copernicus complexe pour chaque établissement.
 - Les contrôles TypeScript, Python, build et export réel en simulation sont réussis. La bascule Coolify reste à effectuer.
 
+### 2026-08-31, fond satellite et informations légales
+
+- L'utilisateur confirme la bascule Coolify vers Supabase, le redéploiement et un contrôle `/api/health` réussi avec `{"status":"ok","service":"yakisugi"}`.
+- T-019 saisie : ajouter un sélecteur accessible Plan/Satellite sans réinitialiser la carte, utiliser l'orthophotographie IGN comme couche raster et publier les informations légales Kosmio issues de SIRENE et des sources officielles de l'éditeur.
+- T-019 terminée localement : contrôle Plan/Satellite, flux IGN configurable, attribution visible, page légale, pied de page et sitemap ajoutés.
+- Fichiers principaux : `components/map/map-base-layer-switch.tsx`, `components/map/radar-map.tsx`, `app/mentions-legales/page.tsx`, `app/layout.tsx`, `app/globals.css`, `app/sitemap.ts`, `.env.example`, `docs/DEPLOYMENT.md`, `tests/map-base-layer-switch.test.tsx`, `tests/pages.test.ts` et `scripts/smoke-web.mjs`.
+- Vérifications réussies : tuile IGN en HTTP 200, 61 tests TypeScript, build Next.js et 9 parcours smoke HTTP.
+
+### 2026-09-01, diagnostic de la carte absente
+
+- Le défaut est absent en mode fixtures : le canvas MapLibre, les couches, le sélecteur Plan/Satellite et les contrôles sont visibles sans erreur console.
+- Le défaut est reproduit en mode Supabase sans variables d'exécution : `/carte` échoue avant le rendu avec l'erreur de configuration `NEXT_PUBLIC_SUPABASE_URL` et `SUPABASE_SECRET_KEY`.
+- La réponse `{"status":"ok","service":"yakisugi"}` ne contrôlait aucune dépendance et constituait un faux positif.
+- T-020 terminée : `/api/health` valide désormais la configuration de la source de données et retourne `503` lorsque Supabase est incomplet.
+- Le `Dockerfile` accepte aussi `NEXT_PUBLIC_SATELLITE_TILE_URL` comme argument de build afin que Coolify puisse remplacer le flux IGN par défaut sans modifier le code.
+- T-018 passe à `BLOCKED` jusqu'à la vérification des variables Coolify : URL Supabase et clé secrète disponibles à l'exécution, puis redéploiement. Les variables cartographiques publiques restent des variables de build.
+
+### 2026-09-01, optimisation de chargement de la carte
+
+- T-021 saisie : les mesures Supabase identifient le transfert de géométries complètes et simplifiées pour la même carte, ainsi que des lectures successives évitables. La correction conserve les géométries sources et les exports complets.
+- T-021 terminée localement : les lectures cartographiques utilisent `geometry_web`, ne consultent la géométrie complète qu'en secours pour les données historiques, regroupent les couches indépendantes et retardent l'import de MapLibre. Un état de chargement route rend la navigation immédiatement visible.
+
 ## Reste à faire
 
-T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. T-016 est terminée et le MVP public fonctionne encore sur fixtures. Le snapshot réel EMSR899 est publié et contrôlé dans Supabase. La bascule Coolify et la recette publique restent à effectuer. Les informations légales de l'éditeur restent à ajouter. Les clés Stripe seront utiles uniquement lors de sa réactivation.
+T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. Le snapshot réel EMSR899 est publié et contrôlé dans Supabase. T-018 est bloquée par la configuration d'exécution Coolify à vérifier après le signalement de la carte absente. Les changements T-019 à T-021 doivent être commités, redéployés puis contrôlés dans le navigateur public. Les clés Stripe seront utiles uniquement lors de sa réactivation.
 
 ## Prochaine tâche saisissable
 
-Basculer `YAKISUGI_DATA_SOURCE` de `fixture` à `supabase` dans Coolify, redéployer le commit contrôlé et exécuter la recette publique complète.
+Dans Coolify, vérifier que `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` et `YAKISUGI_DATA_SOURCE=supabase` sont disponibles à l'exécution, sans exposer les valeurs. Commiter et redéployer T-019 à T-021, attendre un healthcheck `200`, puis vérifier publiquement la carte EMSR899, le sélecteur Plan/Satellite, `/mentions-legales`, la fiche événement, les filtres et les API.

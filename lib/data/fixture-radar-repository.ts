@@ -24,6 +24,10 @@ export class FixtureRadarRepository implements RadarRepository {
     };
   }
 
+  async getRadarDataBySlug(slug: string) {
+    return radarFixture.incident.properties.slug === slug ? radarFixture : null;
+  }
+
   async listParcelsByIncident(slug: string, options: ParcelListOptions = {}) {
     if (radarFixture.incident.properties.slug !== slug) {
       return null;

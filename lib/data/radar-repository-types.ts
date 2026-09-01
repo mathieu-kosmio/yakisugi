@@ -5,6 +5,7 @@ import type {
   IncidentSummary,
   IndustryFeature,
   ParcelFeature,
+  RadarFixture,
 } from "@/lib/domain/types";
 
 export type IncidentDetail = {
@@ -55,6 +56,7 @@ export function paginationFor(
 
 export interface RadarRepository {
   listIncidents(): Promise<IncidentSummary[]>;
+  getRadarDataBySlug(slug: string): Promise<RadarFixture | null>;
   getIncidentBySlug(slug: string): Promise<IncidentDetail | null>;
   listParcelsByIncident(
     slug: string,

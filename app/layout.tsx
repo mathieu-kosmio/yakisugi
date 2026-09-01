@@ -43,9 +43,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </header>
         <main>{children}</main>
         <footer className="site-footer">
-          <div className="site-shell">
-            Yakisugi fournit des estimations indicatives à vérifier avant toute
-            décision opérationnelle.
+          <div className="site-shell site-footer-content">
+            <p>
+              Yakisugi fournit des estimations indicatives à vérifier avant
+              toute décision opérationnelle.
+            </p>
+            <nav
+              className="site-footer-links"
+              aria-label="Informations légales"
+            >
+              <Link href="/mentions-legales">Mentions légales</Link>
+              <a href="https://kosm.io/contact/">Contact Kosmio</a>
+            </nav>
           </div>
         </footer>
       </body>
