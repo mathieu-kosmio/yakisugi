@@ -14,7 +14,7 @@ Dernière mise à jour : 1er septembre 2026
 
 ## État courant
 
-Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 est chargé et publié dans Supabase : 31 602,37 ha d'incident, 3 615 formations forestières sources, 11 786 parcelles affectées et 2 019 établissements industriels. Le healthcheck vérifie désormais la configuration Supabase. La carte a été optimisée localement : elle lit seulement les géométries web quand elles existent, regroupe les lectures indépendantes, évite la liste d'incidents déjà connue et reporte le chargement de MapLibre. La recette publique complète attend la correction des variables Coolify, le redéploiement et le contrôle navigateur.
+Le MVP complet est déployé dans Coolify sur HTTPS avec les données Supabase réelles : 31 602,37 ha d'incident, 3 615 formations forestières sources, 11 786 parcelles affectées et 2 019 établissements industriels. Le commit `e8f68e5` est actif. Le healthcheck, l'accueil, la carte, la fiche événement et les API publiques ont été contrôlés. La carte charge encore un volume de géométries important à étudier dans une tâche dédiée de performance.
 
 ## Jalons
 
@@ -22,7 +22,7 @@ Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 e
 |---|---|---|---|
 | M0 | DONE | Socle local | Installation, lint, types, tests et build réussissent |
 | M1 | DONE | Tranche carte sur fixtures | Incident, forêts, 10 parcelles et industries visibles, fiche parcelle cliquable |
-| M2 | IN_PROGRESS | Données PostGIS | Migrations appliquées et lecture Supabase remplaçant les fixtures |
+| M2 | DONE | Données PostGIS | Migrations appliquées et lecture Supabase remplaçant les fixtures |
 | M3 | DONE | ETL réel | Incident, forêt, cadastre et industries importables par CLI avec tests géospatiaux |
 | M4 | DONE | Produit professionnel | Filtres, fiche événement, pagination et limites publiques |
 | M5 | DONE | Monétisation | Contact par défaut, paiement externe administré, Stripe optionnel, ZIP et téléchargement protégé |
@@ -51,7 +51,7 @@ Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 e
 | T-015B | DONE | T-014 | `app/acheter/`, `lib/sales/`, `scripts/admin/`, `supabase/` | Formulaire de contact, paiement externe et livraison administrée |
 | T-016 | DONE | T-012, T-015 | transversal | Tests E2E, performance, analytics et déploiement |
 | T-017 | DONE | T-009 | `scripts/`, `tests/etl/`, `docs/data/`, `data/sirene/` | Extraction SIRENE officielle ciblée, normalisée, tracée et validée à blanc |
-| T-018 | BLOCKED | T-003B, T-016, T-017 | `supabase/`, `scripts/`, `data/`, Coolify | Migrations et données réelles publiées, contrôlées puis servies par le site |
+| T-018 | DONE | T-003B, T-016, T-017 | `supabase/`, `scripts/`, `data/`, Coolify | Migrations et données réelles publiées, contrôlées puis servies par le site |
 | T-019 | DONE | T-016 | `components/map/`, `app/`, `tests/`, `docs/` | Fond satellite IGN activable et informations légales de l'éditeur implémentés et vérifiés |
 | T-020 | DONE | T-018 | `app/api/health/`, `tests/`, `docs/` | Healthcheck refusant une configuration Supabase incomplète |
 | T-021 | DONE | T-018 | `app/carte/`, `components/map/`, `lib/data/`, `tests/`, `docs/` | Carte Supabase chargée sans géométries complètes redondantes ni requêtes en cascade |
@@ -170,6 +170,8 @@ Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 e
 | 2026-09-01 | T-023 | test de non-régression ciblé | Échec rouge observé avant l'ajout du lecteur de nom, puis 2 assertions réussies sur le nom présent et absent |
 | 2026-09-01 | T-023 | `npm run check` | Biome, TypeScript et 66 tests réussis |
 | 2026-09-01 | T-023 | `npm run build` et `npm run smoke:web` | Build de production réussi et 9 parcours HTTP locaux réussis, dont la carte |
+| 2026-09-01 | T-018, T-023 | Coolify, commit `e8f68e5` | Déploiement automatique réussi, commit actif confirmé dans l'application |
+| 2026-09-01 | T-018, T-023 | recette HTTPS publique | `/api/health`, l'accueil, la carte EMSR899, la fiche événement et les API incidents et industries répondent 200 |
 
 ## Journal de session
 
@@ -270,10 +272,16 @@ Le MVP complet est déployé dans Coolify sur HTTPS. Le snapshot réel EMSR899 e
 - T-023 saisie : afficher le nom du site industriel au survol de son marqueur, en utilisant le nom déjà présent dans les données cartographiques.
 - T-023 terminée localement : le survol d'un marqueur ouvre une infobulle contenant uniquement le nom publié de l'établissement. Le contenu est ajouté comme texte DOM, ce qui évite l'interprétation de données externes, et l'infobulle disparaît à la sortie du marqueur.
 
+### 2026-09-01, publication de la carte optimisée
+
+- Coolify exécute le commit `e8f68e5` après le déploiement automatique réussi. Les variables Supabase nécessaires sont présentes à l'exécution sans lecture ni exposition de leurs valeurs.
+- T-018 est terminée : les routes publiques servent le snapshot EMSR899 réel, dont l'incident du Porge et de Lacanau, ses parcelles et ses industries. Le healthcheck retourne 200.
+- La carte répond publiquement, mais son document initial pèse encore environ 10,6 Mo avec le jeu réel. Cette mesure appelle une investigation de performance séparée avant toute nouvelle optimisation.
+
 ## Reste à faire
 
-T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. Le snapshot réel EMSR899 est publié et contrôlé dans Supabase. T-018 est bloquée par la configuration d'exécution Coolify à vérifier après le signalement de la carte absente. Les changements T-019 à T-023 doivent être commités, redéployés puis contrôlés dans le navigateur public. Les clés Stripe seront utiles uniquement lors de sa réactivation.
+T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. Le MVP est publié avec son snapshot EMSR899 réel et la fonctionnalité de survol des sites industriels. La priorité suivante consiste à réduire le volume de la réponse initiale de la carte réelle. Les clés Stripe seront utiles uniquement lors de sa réactivation.
 
 ## Prochaine tâche saisissable
 
-Dans Coolify, vérifier que `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY` et `YAKISUGI_DATA_SOURCE=supabase` sont disponibles à l'exécution, sans exposer les valeurs. Commiter et redéployer T-019 à T-023, attendre un healthcheck `200`, puis vérifier publiquement la carte EMSR899, le survol des sites industriels, le sélecteur Plan/Satellite, `/mentions-legales`, la fiche événement, les filtres et les API.
+Mesurer les charges initiales de la carte réelle, identifier les couches ou sérialisations majoritaires et réduire le volume transféré sans retirer les données utiles ni déplacer de traitement SIG lourd dans le navigateur.
