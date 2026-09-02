@@ -57,6 +57,7 @@ Le MVP complet est déployé dans Coolify sur HTTPS avec les données Supabase r
 | T-021 | DONE | T-018 | `app/carte/`, `components/map/`, `lib/data/`, `tests/`, `docs/` | Carte Supabase chargée sans géométries complètes redondantes ni requêtes en cascade |
 | T-022 | DONE | T-021 | `lib/data/`, `tests/`, `docs/` | Validation compatible avec les réponses Supabase limitées à `geometry_web` |
 | T-023 | DONE | T-022 | `components/map/`, `app/`, `tests/`, `docs/` | Nom du site industriel visible au survol de son marqueur |
+| T-024 | DONE | T-023 | `components/map/`, `lib/`, `tests/`, `docs/` | Fiche Annuaire des Entreprises accessible depuis chaque marqueur SIRENE |
 
 ## Preuves de vérification
 
@@ -172,6 +173,9 @@ Le MVP complet est déployé dans Coolify sur HTTPS avec les données Supabase r
 | 2026-09-01 | T-023 | `npm run build` et `npm run smoke:web` | Build de production réussi et 9 parcours HTTP locaux réussis, dont la carte |
 | 2026-09-01 | T-018, T-023 | Coolify, commit `e8f68e5` | Déploiement automatique réussi, commit actif confirmé dans l'application |
 | 2026-09-01 | T-018, T-023 | recette HTTPS publique | `/api/health`, l'accueil, la carte EMSR899, la fiche événement et les API incidents et industries répondent 200 |
+| 2026-09-02 | T-024 | test de non-régression ciblé | Échec rouge avant la construction du lien SIRET, puis URL officielle et refus d'un SIRET invalide validés |
+| 2026-09-02 | T-024 | `npm run check` | Biome, TypeScript et 67 tests réussis |
+| 2026-09-02 | T-024 | `npm run build` et `npm run smoke:web` | Build de production réussi et 9 parcours HTTP locaux réussis |
 
 ## Journal de session
 
@@ -278,9 +282,14 @@ Le MVP complet est déployé dans Coolify sur HTTPS avec les données Supabase r
 - T-018 est terminée : les routes publiques servent le snapshot EMSR899 réel, dont l'incident du Porge et de Lacanau, ses parcelles et ses industries. Le healthcheck retourne 200.
 - La carte répond publiquement, mais son document initial pèse encore environ 10,6 Mo avec le jeu réel. Cette mesure appelle une investigation de performance séparée avant toute nouvelle optimisation.
 
+### 2026-09-02, accès aux fiches SIRENE
+
+- T-024 saisie : conserver le SIRET dans la donnée cartographique publique et ouvrir la fiche officielle Annuaire des Entreprises au clic d'un marqueur industriel.
+- T-024 terminée localement : le survol conserve le nom de l'établissement et précise que le clic ouvre sa fiche SIRENE. Le lien est construit uniquement pour un SIRET de 14 chiffres, puis ouvert dans un nouvel onglet sans transmettre la page d'origine.
+
 ## Reste à faire
 
-T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. Le MVP est publié avec son snapshot EMSR899 réel et la fonctionnalité de survol des sites industriels. La priorité suivante consiste à réduire le volume de la réponse initiale de la carte réelle. Les clés Stripe seront utiles uniquement lors de sa réactivation.
+T-013 demeure bloquée en l'absence de coefficients forestiers validés, les volumes restent donc `null`. Le MVP est publié avec son snapshot EMSR899 réel, le survol des sites industriels et l'accès aux fiches SIRENE. La priorité suivante consiste à réduire le volume de la réponse initiale de la carte réelle. Les clés Stripe seront utiles uniquement lors de sa réactivation.
 
 ## Prochaine tâche saisissable
 

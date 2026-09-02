@@ -124,7 +124,7 @@ export class SupabaseRadarRepository implements RadarRepository {
       this.client
         .from("incident_industrial_sites")
         .select(
-          "distance_km,industrial_sites!inner(id,company_name,category,commune,longitude,latitude)",
+          "distance_km,industrial_sites!inner(id,siret,company_name,category,commune,longitude,latitude)",
         )
         .eq("incident_id", incidentWithGeometry.id)
         .lte("distance_km", 200)
@@ -232,7 +232,7 @@ export class SupabaseRadarRepository implements RadarRepository {
     let query = this.client
       .from("incident_industrial_sites")
       .select(
-        "distance_km,industrial_sites!inner(id,company_name,category,commune,longitude,latitude)",
+        "distance_km,industrial_sites!inner(id,siret,company_name,category,commune,longitude,latitude)",
         { count: "exact" },
       )
       .eq("incident_id", incidentId)

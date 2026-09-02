@@ -160,6 +160,7 @@ describe("Supabase DTO mapping", () => {
       distance_km: 27.5,
       industrial_sites: {
         id: industryId,
+        siret: "10000000100011",
         company_name: "Scierie des Pins",
         category: "SAWMILL",
         commune: "Salaunes",
@@ -171,6 +172,7 @@ describe("Supabase DTO mapping", () => {
     expect(industry.geometry.coordinates).toEqual([-0.83, 44.94]);
     expect(industry.properties).toEqual({
       id: industryId,
+      siret: "10000000100011",
       companyName: "Scierie des Pins",
       category: "SAWMILL",
       commune: "Salaunes",

@@ -7,7 +7,10 @@ import type {
 } from "maplibre-gl";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { getIndustryMarkerName } from "@/components/map/industry-marker-tooltip";
+import {
+  getIndustryMarkerName,
+  getIndustrySireneUrl,
+} from "@/components/map/industry-marker-tooltip";
 import {
   type MapBaseLayer,
   MapBaseLayerSwitch,
@@ -254,12 +257,20 @@ export function RadarMap({ fixture }: RadarMapProps) {
 
           const content = document.createElement("p");
           content.className = "industry-marker-tooltip";
-          content.textContent = companyName;
+          content.textContent = `${companyName} · Cliquer pour consulter la fiche SIRENE`;
           industryPopup
             .setLngLat(event.lngLat)
             .setDOMContent(content)
             .addTo(map);
           map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("click", "industry-points", (event) => {
+          const sireneUrl = getIndustrySireneUrl(
+            event.features?.[0]?.properties,
+          );
+          if (!sireneUrl) return;
+
+          window.open(sireneUrl, "_blank", "noopener,noreferrer");
         });
         map.on("mouseleave", "industry-points", () => {
           industryPopup?.remove();

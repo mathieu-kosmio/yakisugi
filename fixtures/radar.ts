@@ -166,6 +166,7 @@ const industryData: Array<
   [
     string,
     string,
+    string,
     IndustryFeature["properties"]["category"],
     string,
     number,
@@ -173,9 +174,19 @@ const industryData: Array<
     number,
   ]
 > = [
-  ["industry-1", "Scierie des Pins", "SAWMILL", "Salaunes", -0.83, 44.94, 18],
+  [
+    "industry-1",
+    "10000000100011",
+    "Scierie des Pins",
+    "SAWMILL",
+    "Salaunes",
+    -0.83,
+    44.94,
+    18,
+  ],
   [
     "industry-2",
+    "10000000200012",
     "Bois Médoc Exploitation",
     "FORESTRY",
     "Castelnau-de-Médoc",
@@ -183,9 +194,19 @@ const industryData: Array<
     45.03,
     27,
   ],
-  ["industry-3", "Panneaux Atlantique", "PANELS", "Bordeaux", -0.58, 44.84, 49],
+  [
+    "industry-3",
+    "10000000300013",
+    "Panneaux Atlantique",
+    "PANELS",
+    "Bordeaux",
+    -0.58,
+    44.84,
+    49,
+  ],
   [
     "industry-4",
+    "10000000400014",
     "Négoce Girondin",
     "WOOD_TRADING",
     "Mérignac",
@@ -195,6 +216,7 @@ const industryData: Array<
   ],
   [
     "industry-5",
+    "10000000500015",
     "Énergie Sylvicole",
     "WOOD_ENERGY",
     "Belin-Béliet",
@@ -204,6 +226,7 @@ const industryData: Array<
   ],
   [
     "industry-6",
+    "10000000600016",
     "Emballages du Bassin",
     "PACKAGING",
     "Biganos",
@@ -211,10 +234,29 @@ const industryData: Array<
     44.64,
     44,
   ],
-  ["industry-7", "Scierie Landaise", "SAWMILL", "Sore", -0.58, 44.32, 91],
-  ["industry-8", "Forêt Services", "FORESTRY", "Hourtin", -1.06, 45.19, 20],
+  [
+    "industry-7",
+    "10000000700017",
+    "Scierie Landaise",
+    "SAWMILL",
+    "Sore",
+    -0.58,
+    44.32,
+    91,
+  ],
+  [
+    "industry-8",
+    "10000000800018",
+    "Forêt Services",
+    "FORESTRY",
+    "Hourtin",
+    -1.06,
+    45.19,
+    20,
+  ],
   [
     "industry-9",
+    "10000000900019",
     "Bois Landes Industrie",
     "PANELS",
     "Labouheyre",
@@ -224,6 +266,7 @@ const industryData: Array<
   ],
   [
     "industry-10",
+    "10000001000010",
     "Comptoir du Bois",
     "WOOD_TRADING",
     "Langon",
@@ -234,10 +277,19 @@ const industryData: Array<
 ];
 
 const industries: IndustryFeature[] = industryData.map(
-  ([id, companyName, category, commune, longitude, latitude, distanceKm]) => ({
+  ([
+    id,
+    siret,
+    companyName,
+    category,
+    commune,
+    longitude,
+    latitude,
+    distanceKm,
+  ]) => ({
     type: "Feature",
     id,
-    properties: { id, companyName, category, commune, distanceKm },
+    properties: { id, siret, companyName, category, commune, distanceKm },
     geometry: { type: "Point", coordinates: [longitude, latitude] },
   }),
 );

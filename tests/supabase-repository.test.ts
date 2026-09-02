@@ -171,6 +171,7 @@ const industryRow = {
   distance_km: 27.5,
   industrial_sites: {
     id: industryId,
+    siret: "10000000100011",
     company_name: "Scierie des Pins",
     category: "SAWMILL" as const,
     commune: "Salaunes",

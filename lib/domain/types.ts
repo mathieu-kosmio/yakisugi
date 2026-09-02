@@ -58,6 +58,7 @@ export type ParcelProperties = {
 
 export type IndustryProperties = {
   id: string;
+  siret: string;
   companyName: string;
   category: IndustryCategory;
   commune: string;

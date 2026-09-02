@@ -96,6 +96,7 @@ const industryProximityRowSchema = z.object({
   distance_km: z.coerce.number(),
   industrial_sites: z.object({
     id: z.uuid(),
+    siret: z.string(),
     company_name: z.string(),
     category: z.enum([
       "FORESTRY",
@@ -204,6 +205,7 @@ export function mapIndustryProximityRow(input: unknown): IndustryFeature {
     geometry,
     properties: {
       id: site.id,
+      siret: site.siret,
       companyName: site.company_name,
       category: site.category,
       commune: site.commune,
